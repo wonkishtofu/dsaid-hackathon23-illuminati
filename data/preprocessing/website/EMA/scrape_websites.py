@@ -31,4 +31,7 @@ for url in URLs:
     end_index = end_index = html.find("</title>")
     title = html[start_index:end_index]
     
+    print("\n\n\n")
     print(title)
+    
+    print(html)
