@@ -1,7 +1,7 @@
 """
 HOW TO USE
 
-dependency: websites.csv, requirements.txt
+dependency: websites.csv, /../requirements.txt
 Add the links to websites of interest in websites.csv
 Run this script to extract website content
 Feed the transcript to ChatGPT and ask it to generate a table of Q&A pairs
@@ -21,25 +21,24 @@ from time import sleep
 input_file = 'websites.csv' # file with website URLs
 URLs = pd.read_csv(input_file)['URL']
 
+def get_content(soup):
+    article = soup.select('<div class="internal-content">')
+    return article[0].get_text().strip()
+
 transcript_dict = {}
 for url in URLs:
     page = requests.get(url)
     soup = BeautifulSoup(page.content, "html.parser")
-        
-    # <div class="internal-content">
-    results = soup.find(id = "internal")
-    elements = results.find_all("div", class_="internal-content")
+    
+    content = get_article_title(soup)
 
-    parse_text = ""
-    for element in elements:
-        title = element.find("h1", class_="banner-header").text.strip()
-        parse_text += element.text.strip() + " "
+    title = content.find("h1", class_="banner-header").text.strip()
 
-    transcript_dict[title] = parse_text
+    transcript_dict[title] = content
     
     print(title)
     print("\n")
-    print(parse_text)
+    print(content)
     print("\n\n")
     
 with open("transcript.json", "w") as file:
