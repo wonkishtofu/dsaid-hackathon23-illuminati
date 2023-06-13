@@ -24,23 +24,21 @@ URLs = pd.read_csv(input_file)['URL']
 def get_content(soup):
     results = soup.find(id = "internal")
     elements = results.find_all("div", class_="internal-content")
-    
+    title = elements[0].find("h1").text.strip()
     parse_text = ""
     for element in elements:
         parse_text += element.get_text()
         
-    return parse_text, elements
+    return title, parse_text
     
 transcript_dict = {}
 for url in URLs:
     page = requests.get(url)
     soup = BeautifulSoup(page.content, "html.parser")
     
-    content, elements = get_content(soup)
+    title, content = get_content(soup)
 
-    title = elements[0].text.strip()
-
-    transcript_dict[title] = content
+    transcript_dict["EMA: " + title] = content
     
     print(title)
     print("\n")
