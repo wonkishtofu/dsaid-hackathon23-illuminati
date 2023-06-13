@@ -57,7 +57,7 @@ for ii, url in enumerate(URLs):
     
     transcript_dict[title] = parse_text
 
-with open("transcript.json", "w") as file:
+with open("video_transcript.json", "w") as file:
     json.dump(transcript_dict, file, indent = 4)
 # improvements:
 # 1. scrape metadata, e.g. author, views, likes, tags, comments

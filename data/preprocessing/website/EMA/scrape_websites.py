@@ -22,17 +22,23 @@ input_file = 'websites.csv' # file with website URLs
 URLs = pd.read_csv(input_file)['URL']
 
 def get_content(soup):
-    article = soup.select('<div class="internal-content">')
-    return article[0].get_text().strip()
-
+    results = soup.find(id = "internal")
+    elements = results.find_all("div", class_="internal-content")
+    
+    parse_text = ""
+    for element in elements:
+        parse_text += element.get_text()
+        
+    return parse_text, elements
+    
 transcript_dict = {}
 for url in URLs:
     page = requests.get(url)
     soup = BeautifulSoup(page.content, "html.parser")
     
-    content = get_article_title(soup)
+    content, elements = get_content(soup)
 
-    title = content.find("h1", class_="banner-header").text.strip()
+    title = elements[0].text.strip()
 
     transcript_dict[title] = content
     
@@ -40,9 +46,10 @@ for url in URLs:
     print("\n")
     print(content)
     print("\n\n")
-    
-with open("transcript.json", "w") as file:
+
+with open("ema_website_transcript.json", "w") as file:
     json.dump(transcript_dict, file, indent = 4)
 # improvements:
 # 1. scrape in smaller chunks with title, subheader context tags
-# 2. unstructured language processing, e.g. https://realpython.com/natural-language-processing-spacy-python/
+# 2. include embedded URLs in scrape
+# 3. unstructured language processing, e.g. https://realpython.com/natural-language-processing-spacy-python/
