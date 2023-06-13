@@ -3,6 +3,7 @@ HOW TO USE
 
 dependency: requirements.txt, all scraped raw data files in ../../raw/
 
+outputs: raw_data_summaries_sample.csv, raw_data_qna_sample.csv
 """
 
 import csv
@@ -27,6 +28,7 @@ raw_path = os.chdir('../../raw/')
 raw_data = {}
 for filename in os.listdir(raw_path):
     name, file_extension = os.path.splitext(filename)
+    
     # read CSV raw data files
     if '.csv' in file_extension:
         input_df = pd.read_csv(name + file_extension)
@@ -50,16 +52,19 @@ for filename in os.listdir(raw_path):
     else:
         print("Did not read file: {}".format(name + file_extension))
         
+# change working directory to save GPT outputs
+processed_path = os.chdir('../processed/')
+
 # Exponential backoff decorator
 @retry(wait = wait_random_exponential(min = 10, max = 80), stop = stop_after_attempt(10))
 def completion_with_backoff(**kwargs):
     return openai.ChatCompletion.create(**kwargs)
 
-# Helper function to get returns from gpt
+# Helper function to get returns from GPT
 def get_message_completion(messages,
-                     model = "gpt-3.5-turbo",
+                     model = "davinci",
                      temperature = 0,
-                     max_tokens = 1000,
+                     max_tokens = 500,
                      num_pairings = 100
                     ):
 
@@ -76,7 +81,7 @@ extracts = {}
 for title, content in raw_data.items():
     
     try:
-        # Set messages for chatgpt
+        # Set messages for ChatGPT
         messages =  [
         {'role':'system',
          'content':f"""Please refer to the content provided: {content.strip()}"""},
@@ -85,7 +90,7 @@ for title, content in raw_data.items():
          Make sure to retain key statistics or figures."""},
         ]
         
-        # Obtain gpt response
+        # Obtain GPT response
         response = get_message_completion(messages, max_tokens = 500)
         
         # Save to dictionary
@@ -94,7 +99,7 @@ for title, content in raw_data.items():
     except Exception as e:
         print(f"'{title}' was not summarised. Error message: {e}'")
     
-    # time.sleep(20)
+    time.sleep(20)
 
 print(len(extracts))
 
