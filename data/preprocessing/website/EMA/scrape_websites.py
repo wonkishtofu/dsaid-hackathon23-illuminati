@@ -27,8 +27,10 @@ def get_content(soup):
     title = elements[0].find("h1").text.strip()
     parse_text = ""
     for element in elements:
-        parse_text += element.get_text()
+        parse_text += element.get_text(strip = True)
         
+    title = str(title.encode('ascii', errors = 'ignore'))
+    parse_text = str(parse_text.encode('ascii', errors = 'ignore'))
     return title, parse_text
     
 transcript_dict = {}
