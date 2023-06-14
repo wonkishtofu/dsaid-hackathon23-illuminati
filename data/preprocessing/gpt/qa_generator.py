@@ -62,7 +62,7 @@ def completion_with_backoff(**kwargs):
 
 # Helper function to get returns from GPT
 def get_message_completion(messages,
-                     model = "davinci",
+                     model = "gpt-3.5-turbo",
                      temperature = 0,
                      max_tokens = 500,
                      num_pairings = 100
