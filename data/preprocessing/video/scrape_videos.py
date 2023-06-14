@@ -46,9 +46,11 @@ for ii, url in enumerate(URLs):
         for value in d['text']:
             parse_text += str(value)
         parse_text += " "
-        
+    parse_text = str(parse_text.encode('ascii', errors = 'ignore'))
+    
     youtube = etree.HTML(urllib.request.urlopen(url).read())
     title = youtube.xpath("//title")[0].text
+    title = str(title.encode('ascii', errors = 'ignore'))
     
     print(title)
     print("\n")
