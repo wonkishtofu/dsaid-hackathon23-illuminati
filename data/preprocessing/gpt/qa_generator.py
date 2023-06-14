@@ -22,6 +22,7 @@ import time
 _ = load_dotenv(find_dotenv()) # read local .env file
 openai.api_key  = os.environ['OPENAI_API_KEY']
 
+"""
 current_path = os.getcwd()
 raw_path = os.chdir('../../raw/')
 
@@ -82,13 +83,7 @@ for title, content in raw_data.items():
     
     try:
         # Set messages for ChatGPT
-        messages =  [
-        {'role':'system',
-         'content':f"""Please refer to the content provided: {content.strip()}"""},
-        {'role':'user',
-         'content':f"""Summarise the most relevant lines related to solar energy or solar panels. \
-         Make sure to retain key statistics or figures."""},
-        ]
+        messages = []
         
         # Obtain GPT response
         response = get_message_completion(messages, max_tokens = 500)
@@ -117,13 +112,7 @@ for t, s in extracts.items():
     
     try:
         # Set messages for ChatGPT
-        messages =  [
-        {'role':'system',
-         'content':f"""Please refer to the content provided: {s.strip()}"""},
-        {'role':'user',
-         'content':f"""# Create a JSON of {num_qna} pairs of questions and answers based on this summary. \
-         The key value pairs should be the question and answer."""},
-        ]
+        messages =  []
         
         # Obtain gpt response
         response = get_message_completion(messages, max_tokens = 1000)
@@ -148,3 +137,12 @@ qna_melt['Questions'], qna_melt['answers'] = zip(*qna_melt['value'])
 qna_melt = qna_melt.drop('value', axis = 1)
 
 qna_melt.to_csv("raw_data_qna_sample.csv")
+
+"""
+from transformers import pipeline
+
+sumamrizer = pipeline("summarization", model = "facebook/bart-large-cnn")
+
+for title, content in raw_data.items():
+    print(summarizer(content, max_length = 150, min_length = 25, do_sample = False))
+    
