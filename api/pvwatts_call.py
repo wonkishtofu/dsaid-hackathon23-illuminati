@@ -14,7 +14,7 @@ WORKFLOW:
 
 2. REAL-TIME WEATHER & SOLAR API (OPENUV / NSRDB): Get real time data on solar radiation and/or weather variables (e.g. rainfall, cloud cover, etc)
 
-4. ESTIMATE OF kW/m2
+4. ESTIMATE OF W/m2
 
 5. INPUT ROOF AREA? To estimate total generation
 - per day

@@ -1,3 +1,4 @@
 flask
+h5pyd
 python-dotenv
 requests
