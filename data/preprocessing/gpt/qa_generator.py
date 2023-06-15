@@ -57,10 +57,9 @@ def retry_with_exponential_backoff(
     initial_delay: float = 1,
     exponential_base: float = 2,
     jitter: bool = True,
-    max_retries: int = 5,
+    max_retries: int = 10,
     errors: tuple = (openai.error.RateLimitError,),
 ):
-    """Retry a function with exponential backoff."""
     def wrapper(*args, **kwargs):
         # Initialize variables
         num_retries = 0
@@ -140,32 +139,31 @@ num_qna = 10 # Set number of Q&As
 """ LOOP THROUGH SCRAPED RAW DATA FILES TO
 (A) SUMMARISE
 (B) GENERATE Q&A PAIRINGS """
+
 for title, content in raw_data.items():
-    content = content.strip()
     summarise_prompt = [{'role':'system',
-         'content':f"""Please refer to the content provided: \n {content} \n\n """},
+         'content':f"""Please refer to the content provided: \n {content.strip()} \n\n """},
         {'role':'user',
          'content':f"""Summarise the most relevant lines related to solar energy or solar panels. Make sure to retain key statistics or figures."""},]
     extracts[title] = chat(summarise_prompt)
     
-    QA_prompt =  [{'role':'system',
-         'content':f"""Please refer to the content provided: {extracts[title].strip()}"""},
-        {'role':'user',
-         'content':f"""# Create a JSON of {num_qna} pairs of questions and answers based on this summary. \
-         The key value pairs should be the question and answer."""},]
-    qna_dict = dict(json.loads(chat(QA_prompt)))
-        
-    # Create list of tuples based on q&a pairings and save to dictionary
-    qna[t] = [(qna_dict[k]['question'], qna_dict[k]['answer']) for k in qna_dict.keys()]
-    
 print(len(extracts))
-
 extracts_df = pd.DataFrame(
     [(k, val) for k, val in extracts.items()],
     columns = ['Title', 'Summary']
 )
-
 extracts_df.to_csv("raw_data_summaries_sample.csv")
+
+for title, summary in extracts.items():
+    QA_prompt =  [{'role':'system',
+         'content':f"""Please refer to the content provided: {summary.strip()}"""},
+        {'role':'user',
+         'content':f"""# Create a JSON of {num_qna} pairs of questions and answers based on this summary. \
+         The key value pairs should be the question and answer. The resultant dictionary should be of the following format: ('1': ('question': 'INSERT_QUESTION_HERE', 'answer', 'INSERT_ANSWER_HERE'), '2': (), ...)"""},]
+    qna_dict = dict(json.loads(chat(QA_prompt)))
+    
+    # Create list of tuples based on Q&A pairings and save to dictionary
+    qna[title] = [(qna_dict[k]['question'], qna_dict[k]['answer']) for k in qna_dict.keys()]
     
 print(len(qna))
 
@@ -176,4 +174,3 @@ qna_melt['Questions'], qna_melt['answers'] = zip(*qna_melt['value'])
 qna_melt = qna_melt.drop('value', axis = 1)
 
 qna_melt.to_csv("raw_data_qna_sample.csv")
-
