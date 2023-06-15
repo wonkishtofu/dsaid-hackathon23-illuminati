@@ -92,7 +92,7 @@ def retry_with_exponential_backoff(
     
 @retry_with_exponential_backoff
 def completion_with_backoff(**kwargs):
-    return openai.Completion.create(**kwargs)
+    return openai.ChatCompletion.create(**kwargs)
 
 # Helper function to get returns from GPT
 def get_message_completion(messages,
