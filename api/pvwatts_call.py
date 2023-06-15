@@ -1,4 +1,5 @@
 from dotenv import load_dotenv, find_dotenv
+from flask import jsonify, make_response
 import json
 import os
 import pandas as pd
@@ -44,9 +45,9 @@ LAT, LON = geocode(formatAddress(ADDRESS))
 DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 print(DT)
 
-response = requests.get(f"https://api.openuv.io/api/v1/uv?lat={LAT}&lng={LON}&alt={0}&dt={DT}&key={OPENUV_API_KEY}")
+response = requests.get(f"https://api.openuv.io/api/v1/uv?lat={LAT}&lng={LON}&alt={0}&dt={DT}", headers = {'Authorization': f'access_token {OPENUV_API_KEY}'})
 
-
+print(response)
 
 """
 #dt =
