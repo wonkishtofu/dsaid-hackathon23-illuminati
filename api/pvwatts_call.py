@@ -12,8 +12,13 @@ WORKFLOW:
 
 1. GEOCODING API (TOMTOM): Get (lat, lon) coordinates from input address
 
-2. REAL-TIME WEATHER & SOLAR API (OPENUV): Get real time solar data on
+2. REAL-TIME WEATHER & SOLAR API (OPENUV / NSRDB): Get real time data on solar radiation and/or weather variables (e.g. rainfall, cloud cover, etc)
 
+4. ESTIMATE OF kW/m2
+
+5. INPUT ROOF AREA? To estimate total generation
+- per day
+- per year
 
 """
 _ = load_dotenv(find_dotenv()) # read local .env file
@@ -43,8 +48,10 @@ def geocode(ADDRESS):
     return LAT, LON
 
 LAT, LON = geocode(formatAddress(ADDRESS))
+
 DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 print(DT)
+
 """
 response = requests.get(f"https://api.openuv.io/api/v1/uv?lat={LAT}&lng={LON}&alt={0}&dt={DT}", headers = {'Authorization': f'access_token {OPENUV_API_KEY}'})
 
