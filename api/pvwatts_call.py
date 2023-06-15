@@ -19,6 +19,7 @@ WORKFLOW:
 _ = load_dotenv(find_dotenv()) # read local .env file
 TOMTOM_API_KEY = os.environ['TOMTOM_API_KEY']
 OPENUV_API_KEY = os.environ['OPENUV_API_KEY']
+NSRDV_API_KEY  = os.environ['NSRDB_API_KEY']
 
 ADDRESS = '12 Cove Grove'
 
@@ -44,18 +45,18 @@ def geocode(ADDRESS):
 LAT, LON = geocode(formatAddress(ADDRESS))
 DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
 print(DT)
-
+"""
 response = requests.get(f"https://api.openuv.io/api/v1/uv?lat={LAT}&lng={LON}&alt={0}&dt={DT}", headers = {'Authorization': f'access_token {OPENUV_API_KEY}'})
 
 print(response)
-
 """
-#dt =
-#print(json.dumps(response, indent = 4))
 
 
+response = requests.get(f"https://developer.nrel.gov/api/nsrdb/v2/solar/psm3-download.csv?wkt=POINT({LON}+{LAT})&api_key={NSRDV_API_KEY}")
+
+print(response)
 # Define the lat, long of the location and the year
-lat, lon, year = 33.2164, -97.1292, 2020
+year = 33.2164, -97.1292, 2020
 _ = load_dotenv(find_dotenv()) # read local .env file
 api_key  = os.environ['NSRDB_API_KEY']
 attributes = 'ghi,dhi,dni,wind_speed,air_temperature,solar_zenith_angle'
@@ -89,4 +90,3 @@ print(df.head())
 
 print(df.columns.values)
 
-"""
