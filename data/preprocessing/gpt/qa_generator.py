@@ -174,3 +174,4 @@ qna_melt['Questions'], qna_melt['answers'] = zip(*qna_melt['value'])
 qna_melt = qna_melt.drop('value', axis = 1)
 
 qna_melt.to_csv("raw_data_qna_sample.csv")
+
