@@ -2,3 +2,5 @@
 .env.swp
 .DS_Store
 .hscfg
+/data/raw
+/data/processed
