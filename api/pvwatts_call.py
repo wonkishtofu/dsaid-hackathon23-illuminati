@@ -1,10 +1,56 @@
 from dotenv import load_dotenv, find_dotenv
+import json
 import os
 import pandas as pd
 import requests
 import sys
+import time
 
-from IPython.display import display
+"""
+WORKFLOW:
+
+1. GEOCODING API (TOMTOM): Get (lat, lon) coordinates from input address
+
+2. REAL-TIME WEATHER & SOLAR API (OPENUV): Get real time solar data on
+
+
+"""
+_ = load_dotenv(find_dotenv()) # read local .env file
+TOMTOM_API_KEY = os.environ['TOMTOM_API_KEY']
+OPENUV_API_KEY = os.environ['OPENUV_API_KEY']
+
+ADDRESS = '12 Cove Grove'
+
+def formatAddress(s):
+    if "Singapore" in s:
+        return s.replace(" ", "+")
+    else:
+        return s.replace(" ", "+") + ",+Singapore"
+
+def geocode(ADDRESS):
+    response = requests.get(f"https://api.tomtom.com/search/2/geocode/{ADDRESS}.json?storeResult=false&view=Unified&key={TOMTOM_API_KEY}").json()
+    
+    print("The address you are querying is: {}".format(response['results'][0]['address']['freeformAddress']))
+    
+    LAT = response['results'][0]['position']['lat']
+    LON = response['results'][0]['position']['lon']
+    print(f"""This address has the following coordinates:
+    latitude: {LAT}
+    longitude: {LON}""")
+    
+    return LAT, LON
+
+LAT, LON = geocode(formatAddress(ADDRESS))
+DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+print(DT)
+
+response = requests.get(f"https://api.openuv.io/api/v1/uv?lat={LAT}&lng={LON}&alt={0}&dt={DT}&key={OPENUV_API_KEY}")
+
+
+
+"""
+#dt =
+#print(json.dumps(response, indent = 4))
 
 
 # Define the lat, long of the location and the year
@@ -28,7 +74,7 @@ info = pd.read_csv(url, nrows = 1)
 # See metadata for specified properties, e.g., timezone and elevation
 timezone, elevation = info['Local Time Zone'], info['Elevation']
 
-print(info)
+print(info.T)
 
 # Return all but first 2 lines of csv to get data:
 df = pd.read_csv('https://developer.nrel.gov/api/nsrdb/v2/solar/psm3-download.csv?wkt=POINT({lon}%20{lat})&names={year}&leap_day={leap}&interval={interval}&utc={utc}&full_name={name}&email={email}&affiliation={affiliation}&mailing_list={mailing_list}&reason={reason}&api_key={api}&attributes={attr}'.format(year=year, lat=lat, lon=lon, leap=leap_year, interval=interval, utc=utc, name=your_name, email=your_email, mailing_list=mailing_list, affiliation=your_affiliation, reason=reason_for_use, api=api_key, attr=attributes), skiprows=2)
@@ -42,3 +88,4 @@ print(df.head())
 
 print(df.columns.values)
 
+"""

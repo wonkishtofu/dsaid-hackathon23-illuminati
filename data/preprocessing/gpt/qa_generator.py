@@ -22,12 +22,14 @@ from tenacity import (
 import time
 from transformers import pipeline
 
+""" LOAD OPENAI_API_KET FROM ENV """
 _ = load_dotenv(find_dotenv()) # read local .env file
 openai.api_key = os.environ['OPENAI_API_KEY']
 
 current_path = os.getcwd()
 raw_path = os.chdir('../../raw/')
 
+""" READ SCRAPED RAW DATA FILES (JSON) """
 raw_data = {}
 for filename in os.listdir(raw_path):
     name, file_extension = os.path.splitext(filename)
@@ -48,13 +50,14 @@ for filename in os.listdir(raw_path):
 # change working directory to save GPT outputs
 processed_path = os.chdir('../processed/')
 
+""" IMPLEMENT EXPONENTIAL BACKOFF """
 # Exponential backoff decorator
 def retry_with_exponential_backoff(
     func,
     initial_delay: float = 1,
     exponential_base: float = 2,
     jitter: bool = True,
-    max_retries: int = 10,
+    max_retries: int = 5,
     errors: tuple = (openai.error.RateLimitError,),
 ):
     """Retry a function with exponential backoff."""
@@ -67,27 +70,23 @@ def retry_with_exponential_backoff(
         while True:
             try:
                 return func(*args, **kwargs)
-
             # Retry on specified errors
             except errors as e:
                 # Increment retries
                 num_retries += 1
-
                 # Check if max retries has been reached
                 if num_retries > max_retries:
                     raise Exception(
                         f"Maximum number of retries ({max_retries}) exceeded."
                     )
-
                 # Increment the delay
                 delay *= exponential_base * (1 + jitter * random.random())
-
                 # Sleep for the delay
                 time.sleep(delay)
-
             # Raise exceptions for any errors not specified
             except Exception as e:
                 raise e
+                
     return wrapper
     
 @retry_with_exponential_backoff
@@ -138,6 +137,9 @@ extracts = {}
 qna = {}
 num_qna = 10 # Set number of Q&As
 
+""" LOOP THROUGH SCRAPED RAW DATA FILES TO
+(A) SUMMARISE
+(B) GENERATE Q&A PAIRINGS """
 for title, content in raw_data.items():
     content = content.strip()
     summarise_prompt = [{'role':'system',
