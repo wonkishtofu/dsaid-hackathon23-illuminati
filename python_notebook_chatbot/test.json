@@ -1,0 +1,23 @@
+    {
+        "answer": "\nSingapore's National Hydrogen Strategy was published in October last year. The strategy aims to develop a hydrogen economy in Singapore, which includes the development of hydrogen production, storage, and utilisation technologies.Additionally, the government has launched an Expression of Interest (EOI) exercise for an ammonia power generation project.",
+        "sources": [
+            {
+                "start": 17637,
+                "end": 18335,
+                "ref_doc_id": "f9629078-8113-4ae5-9f07-085becc87fc6",
+                "score": 0.8427770563950926
+            },
+            {
+                "start": 0,
+                "end": 1980,
+                "ref_doc_id": "f9629078-8113-4ae5-9f07-085becc87fc6",
+                "score": 0.8364640315384528
+            },
+            {
+                "start": 3830,
+                "end": 5872,
+                "ref_doc_id": "f9629078-8113-4ae5-9f07-085becc87fc6",
+                "score": 0.8359905628024856
+            }
+        ]
+    }
