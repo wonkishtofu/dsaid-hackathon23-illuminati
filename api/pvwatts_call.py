@@ -121,24 +121,23 @@ def get_trajectory(LAT, LON, exposure_times):
     
 data_df = get_trajectory(LAT, LON, exposure_times)
 
-
 """
 3. ESTIMATED OUTPUT (PVWATTS)
 """
 
 url = 'https://developer.nrel.gov/api/pvwatts/v6.json'
 
-optimal_tilt = data_df['solarNoon']['Altitude Angle']
+optimal_tilt = data_df['Altitude Angle']['solarNoon']
 
 # Set the parameters for the request
 parameters = {
     'api_key': PVWATTS_API_KEY,
-    'system_capacity': 0.25,  # kW
+    'system_capacity': 0.25,  # kW (standard residential size is about 250 W)
     'module_type': 0,  # 0: Standard, 1: Premium, 2: Thin film
-    'losses': 15,  # %
+    'losses': 15,  # % (default value)
     'array_type': 0,  # 0: Fixed open rack, 1: Fixed roof mount, 2: 1-axis tracking, 3: 1-axis backtracking, 4: 2-axis tracking
     'tilt': optimal_tilt,  # degrees
-    'azimuth': 180,  # degrees
+    'azimuth': 180,  # degrees (since Singapore is on the equator)
     'lat': LAT,
     'lon': LON,
     'timeframe': 'hourly',
@@ -152,3 +151,6 @@ ac_annual = response['outputs']['ac_annual']
 print(f"System Capacity: {system_capacity} kW")
 print(f"AC Annual Energy: {ac_annual} kWh")
 
+print(f"This estimate was based on weather observed at \
+\t Station No.{response['station_info']['location']} in {response['station_info']['state']} {response['station_info']['city']},\
+Located {response['station_info']['distance']} m away from your input address.")
