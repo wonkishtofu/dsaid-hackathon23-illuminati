@@ -122,7 +122,7 @@ def get_trajectory(LAT, LON, exposure_times):
 data_df = get_trajectory(LAT, LON, exposure_times)
 
 """
-3. ESTIMATED OUTPUT (PVWATTS)
+3. ESTIMATED OUTPUT (PVWATTS): Get monthly solar irradiance (with variance?), DC output, AC output, weather station information,
 """
 
 url = 'https://developer.nrel.gov/api/pvwatts/v6.json'
@@ -146,11 +146,4 @@ parameters = {
 response = requests.get(url, params = parameters).json()
 print(response)
 
-system_capacity = response['outputs']['dc_system_size']
-ac_annual = response['outputs']['ac_annual']
-print(f"System Capacity: {system_capacity} kW")
-print(f"AC Annual Energy: {ac_annual} kWh")
-
-print(f"This estimate was based on weather observed at \
-\t Station No.{response['station_info']['location']} in {response['station_info']['state']} {response['station_info']['city']},\
-Located {response['station_info']['distance']} m away from your input address.")
+print(f"This estimate was based on weather observed at Station No. {response['station_info']['location']} in {response['station_info']['state']} {response['station_info']['country']}, located {response['station_info']['distance']} m away from your input address.")
