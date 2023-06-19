@@ -46,7 +46,7 @@ for url in URLs:
     print(content)
     print("\n\n")
     
-    data_df = pd.DataFrame([[url, title, content]], columns = ['URL', 'Title', 'Content'])
+    data_df = pd.DataFrame([[url, "EMA: " + title, content]], columns = ['URL', 'Title', 'Content'])
     save_df = pd.concat([save_df, data_df])
     
 with open("ema_website_transcript.csv", "w") as file:
