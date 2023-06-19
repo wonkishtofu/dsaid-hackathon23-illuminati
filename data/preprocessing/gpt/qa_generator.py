@@ -29,24 +29,47 @@ openai.api_key = os.environ['OPENAI_API_KEY']
 current_path = os.getcwd()
 raw_path = os.chdir('../../raw/')
 
-""" READ SCRAPED RAW DATA FILES (JSON) """
+""" READ SCRAPED RAW DATA FILES (CSV/JSON) """
+
 raw_data = {}
 for filename in os.listdir(raw_path):
-    name, file_extension = os.path.splitext(filename)
-    
-    # read JSON raw data files
-    if '.json' in file_extension:
-        with open(name + file_extension, 'r') as f:
-            data = json.load(f)
+    if filename == "pdf_handbook.csv":
+        name, file_extension = os.path.splitext(filename)
         
-        # extract (key, value) pair and save in raw_data
-        for key, value in data.items():
-            raw_data[key] = value
+        # read CSV raw data files
+        if '.csv' in file_extension:
+            input_df = pd.read_csv(name + file_extension)
             
-        print("Successfully read file: {}".format(name + file_extension))
-    else:
-        print("Did not read file: {}".format(name + file_extension))
+            if 'pdf' in name: # concatenate headers & subheaders for PDF title
+                for ii, text in enumerate(input_df['Text']):
+                    title = ""
+                    for cc in input_df.columns:
+                        if cc == 'Text': break
+                        else: title += input_df[cc][ii] + " | "
+                    raw_data[title] = input_df['Text'][ii]
+                    
+                print("Successfully read file: {}".format(name + file_extension))
+            else:
+                # extract (title, content) pair and save in raw_data
+                for ii, title in enumerate(input_df['Title']):
+                    raw_data[title] = input_df['Content'][ii]
+                    
+                print("Successfully read file: {}".format(name + file_extension))
         
+        # read JSON raw data files
+        elif '.json' in file_extension:
+            with open(name + file_extension, 'r') as f:
+                data = json.load(f)
+            # extract (key, value) pair and save in raw_data
+            for key, value in data.items():
+                raw_data[key] = value
+                
+            print("Successfully read file: {}".format(name + file_extension))
+            
+        # unread files
+        else:
+            print("Did not read file: {}".format(name + file_extension))
+
 # change working directory to save GPT outputs
 processed_path = os.chdir('../processed/')
 
@@ -140,11 +163,12 @@ num_qna = 10 # Set number of Q&As
 (A) SUMMARISE
 (B) GENERATE Q&A PAIRINGS """
 
+
 for title, content in raw_data.items():
     summarise_prompt = [{'role':'system',
-         'content':f"""Please refer to the content provided: \n {content.strip()} \n\n """},
+         'content':f"Please refer to the content provided: \n {content.strip()} \n\n"},
         {'role':'user',
-         'content':f"""Summarise the most relevant lines related to solar energy or solar panels. Make sure to retain key statistics or figures."""},]
+         'content':f"Summarise the most relevant lines related to solar energy or solar panels. Make sure to retain key statistics or figures."},]
     extracts[title] = chat(summarise_prompt)
     
 print(len(extracts))
@@ -154,16 +178,20 @@ extracts_df = pd.DataFrame(
 )
 extracts_df.to_csv("raw_data_summaries_sample.csv")
 
+    
 for title, summary in extracts.items():
+#for title, content in raw_data.items():
     QA_prompt =  [{'role':'system',
-         'content':f"""Please refer to the content provided: {summary.strip()}"""},
+         'content':f"""Please refer to the summary provided: {summary.strip()}"""},
         {'role':'user',
-         'content':f"""# Create a JSON of {num_qna} pairs of questions and answers based on this summary. \
-         The key value pairs should be the question and answer. The resultant dictionary should be of the following format: ('1': ('question': 'INSERT_QUESTION_HERE', 'answer', 'INSERT_ANSWER_HERE'), '2': (), ...)"""},]
+         'content':f"""Create a JSON of {num_qna} pairs of questions and answers based on this content. \
+         The key value pairs should be the question and answer. The resultant dictionary should be of the following format: ("1": ("question": "INSERT_QUESTION_HERE", "answer", "INSERT_ANSWER_HERE"), "2": (), ...)"""},]
     qna_dict = dict(json.loads(chat(QA_prompt)))
     
     # Create list of tuples based on Q&A pairings and save to dictionary
     qna[title] = [(qna_dict[k]['question'], qna_dict[k]['answer']) for k in qna_dict.keys()]
+    
+    print(qna[title])
     
 print(len(qna))
 
