@@ -28,7 +28,7 @@ from urllib.parse import parse_qs
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import JSONFormatter
 
-transcript_dict = {}
+save_df = pd.DataFrame(columns = ['URL', 'Title', 'Content'], )
 
 for ii, url in enumerate(URLs):
     url_data = urlparse(url)
@@ -57,10 +57,12 @@ for ii, url in enumerate(URLs):
     print(parse_text)
     print("\n\n")
     
-    transcript_dict[title] = parse_text
+    data_df = pd.DataFrame([[url, title, parse_text]], columns = ['URL', 'Title', 'Content'])
+    save_df = pd.concat([save_df, data_df])
 
-with open("video_transcript.json", "w") as file:
-    json.dump(transcript_dict, file, indent = 4)
+with open("video_transcript.csv", "w") as file:
+    save_df.to_csv(file, index = False)
+
 # improvements:
 # 1. scrape metadata, e.g. author, views, likes, tags, comments
 # 2. use manually created transcript over auto-generated version
