@@ -28,7 +28,7 @@ from urllib.parse import parse_qs
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import JSONFormatter
 
-save_df = pd.DataFrame(columns = ['URL', 'Title', 'Content'], )
+save_df = pd.DataFrame(columns = ['URL', 'Title', 'Content'])
 
 for ii, url in enumerate(URLs):
     url_data = urlparse(url)
