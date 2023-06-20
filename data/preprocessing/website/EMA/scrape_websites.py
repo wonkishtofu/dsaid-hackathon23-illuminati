@@ -33,23 +33,25 @@ def get_content(soup):
     parse_text = str(parse_text.encode('ascii', errors = 'ignore'))
     return title, parse_text
     
-transcript_dict = {}
+save_df = pd.DataFrame(columns = ['URL', 'Title', 'Content'])
+
 for url in URLs:
     page = requests.get(url)
     soup = BeautifulSoup(page.content, "html.parser")
     
     title, content = get_content(soup)
-
-    transcript_dict["EMA: " + title] = content
     
-    print(title)
+    print("EMA: " + title)
     print("\n")
     print(content)
     print("\n\n")
+    
+    data_df = pd.DataFrame([[url, "EMA: " + title, content]], columns = ['URL', 'Title', 'Content'])
+    save_df = pd.concat([save_df, data_df])
+    
+with open("ema_website_transcript.csv", "w") as file:
+    save_df.to_csv(file, index = False)
 
-with open("ema_website_transcript.json", "w") as file:
-    json.dump(transcript_dict, file, indent = 4)
 # improvements:
 # 1. scrape in smaller chunks with title, subheader context tags
-# 2. include embedded URLs in scrape
-# 3. unstructured language processing, e.g. https://realpython.com/natural-language-processing-spacy-python/
+# 2. unstructured language processing, e.g. https://realpython.com/natural-language-processing-spacy-python/
