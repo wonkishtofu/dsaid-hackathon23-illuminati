@@ -97,14 +97,14 @@ class CustomSolarPostprocessor(BasePydanticNodePostprocessor):
         sorted_node_idxs = np.flip(node_dates.argsort())
         sorted_nodes = [nodes[idx] for idx in sorted_node_idxs]
         
-        # Return most recent nodes if pred is True
-        if pred:
+        # obtain Minister vs non-Minister nodes
+        Min_only = [node for node in sorted_nodes if node.node.extra_info[self.category_key] == "Minister"]
+        non_Min = [node for node in sorted_nodes if node.node.extra_info[self.category_key] != "Minister"]
+
+        # Return most recent nodes if pred is True or if either of the sub-lists are empty
+        if (pred) or (not Min_only) or (not non_Min):
             return sorted_nodes[: self.top_k_recency]
         else:
-            # obtain Minister vs non-Minister nodes
-            Min_only = [node for node in sorted_nodes if node.node.extra_info[self.category_key] == "Minister"]
-            non_Min = [node for node in sorted_nodes if node.node.extra_info[self.category_key] != "Minister"]
-
             # compare dates of most recent Minister vs non-Minister nodes (730 days is 2 years)
             if pd.to_datetime(non_Min[0].node.extra_info[self.date_key]) - pd.to_datetime(Min_only[0].node.extra_info[self.date_key]) > timedelta(days = 730):
                 #if Min nodes are too outdated, take non-Min nodes, otherwise prioritise Min nodes
