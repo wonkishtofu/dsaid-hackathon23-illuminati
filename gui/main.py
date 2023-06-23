@@ -2,9 +2,11 @@ from datetime import datetime
 from typing import List, Tuple
 from uuid import uuid4
 import numpy as np
+import os
 from matplotlib import pyplot as plt
 
 from nicegui import app, Client, ui
+from nicegui.events import MouseEventArguments
 
 messages: List[Tuple[str, str, str, str]] = []
 curr_tab = ''
@@ -63,17 +65,23 @@ async def main(client: Client):
             
             app.add_static_files('/sparkline', './sparkline')
 
-            with ui.column().classes('w-full max-w-3xl mx-auto my-6'):
-                with ui.row().classes('w-full no-wrap items-center'):
-                    with ui.pyplot(figsize=(3, 2)):
-                        x = np.linspace(0.0, 5.0)
-                        y = np.cos(2 * np.pi * x) * np.exp(-x)
-                        plt.plot(x, y, '-')
-            #         sparkline_head = ui.html('<link rel="stylesheet" href="./sparkline/style.css">')
-            #         sparkline_body = ui.html('<div class="chart__container"><canvas id="chart" width="600" height="300"></canvas></div>')
-            
-            # await ui.run_javascript(chart_min_js_str, respond=False)
-            # await ui.run_javascript(js_script_str, respond=False)
+            with ui.column().classes('w-full items-center'):
+                plt.figure(figsize=(8, 6), dpi=80)
+                x = np.linspace(0.0, 5.0)
+                y = np.cos(2 * np.pi * x) * np.exp(-x)
+                plt.plot(x, y, '-')
+                os.makedirs('./assets/', exist_ok=True)
+                plt.savefig('./assets/sparkline_table.png')
+                app.add_static_files('/assets/', './assets/')
+
+                
+                def mouse_handler(e: MouseEventArguments):
+                    color = 'SkyBlue' if e.type == 'mousedown' else 'SteelBlue'
+                    ii.content += f'<circle cx="{e.image_x}" cy="{e.image_y}" r="15" fill="none" stroke="{color}" stroke-width="4" />'
+                    ui.notify(f'{e.type} at ({e.image_x:.1f}, {e.image_y:.1f})')
+
+                ii = ui.interactive_image('./assets/sparkline_table.png', on_mouse=mouse_handler, events=['mousedown', 'mouseup'], cross=True)
+
                 
         with ui.tab_panel(realtime):
             ui.label('Realtime table')
