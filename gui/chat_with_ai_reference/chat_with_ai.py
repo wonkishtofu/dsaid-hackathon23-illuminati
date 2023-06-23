@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 from typing import List, Tuple
 
+from nicegui import Client, ui
+
 from langchain.chains import ConversationChain
 from langchain.chat_models import ChatOpenAI
-
-from nicegui import Client, ui
 
 OPENAI_API_KEY = 'not-set'  # TODO: set your OpenAI API key here
 

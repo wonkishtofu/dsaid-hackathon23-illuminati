@@ -1,11 +1,11 @@
+import os
 from datetime import datetime
 from typing import List, Tuple
 from uuid import uuid4
-import numpy as np
-import os
-from matplotlib import pyplot as plt
 
-from nicegui import app, Client, ui
+import numpy as np
+from matplotlib import pyplot as plt
+from nicegui import Client, app, ui
 from nicegui.events import MouseEventArguments
 
 messages: List[Tuple[str, str, str, str]] = []
