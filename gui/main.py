@@ -9,7 +9,6 @@ from nicegui import app, Client, ui
 from nicegui.events import MouseEventArguments
 
 messages: List[Tuple[str, str, str, str]] = []
-curr_tab = ''
 
 
 @ui.refreshable
@@ -29,20 +28,23 @@ async def main(client: Client):
 
     def on_tab_change(event):
         print(event.value)
+        # remove the text and avatar when move to different tab
+        # have to do this cos they are in footer
         avatar_ui.set_visibility(event.value == 'CHATBOT')
         text.set_visibility(event.value == 'CHATBOT')
-        # sparkline_head.set_visibility(event.value == 'SPARKLINE')
-        # sparkline_body.set_visibility(event.value == 'SPARKLINE')
 
+    # define the tabs
     with ui.tabs().classes('w-full') as tabs:
         chatbot = ui.tab('CHATBOT')
         sparkline = ui.tab('SPARKLINE')
         realtime = ui.tab('REALTIME')
         
+    # set tabs in a tab panel
     with ui.tab_panels(tabs, 
                        value=chatbot, 
                        on_change=on_tab_change).classes('w-full'):
 
+        # what appears in chatbot tab
         with ui.tab_panel(chatbot):
             user_id = str(uuid4())
             avatar = f'https://robohash.org/{user_id}?bgset=bg2'
@@ -59,13 +61,10 @@ async def main(client: Client):
             with ui.column().classes('w-full max-w-2xl mx-auto items-stretch'):
                 await chat_messages(user_id)
             
+        # what appears in sparkline tab
         with ui.tab_panel(sparkline):
-            from sparkline.main import html_code_str_head, html_code_str_body, js_script_str
-            from sparkline.chart_min_js import chart_min_js_str
-            
-            app.add_static_files('/sparkline', './sparkline')
-
             with ui.column().classes('w-full items-center'):
+                # create plot using matplotlib.pyplot
                 plt.figure(figsize=(8, 6), dpi=80)
                 x = np.linspace(0.0, 5.0)
                 y = np.cos(2 * np.pi * x) * np.exp(-x)
@@ -73,16 +72,21 @@ async def main(client: Client):
                 os.makedirs('./assets/', exist_ok=True)
                 plt.savefig('./assets/sparkline_table.png')
                 app.add_static_files('/assets/', './assets/')
-
                 
+                # what happens when mousedown/mouseup, basically adds a circle now
                 def mouse_handler(e: MouseEventArguments):
                     color = 'SkyBlue' if e.type == 'mousedown' else 'SteelBlue'
                     ii.content += f'<circle cx="{e.image_x}" cy="{e.image_y}" r="15" fill="none" stroke="{color}" stroke-width="4" />'
                     ui.notify(f'{e.type} at ({e.image_x:.1f}, {e.image_y:.1f})')
 
-                ii = ui.interactive_image('./assets/sparkline_table.png', on_mouse=mouse_handler, events=['mousedown', 'mouseup'], cross=True)
-
                 
+                ii = ui.interactive_image('./assets/sparkline_table.png', 
+                                          on_mouse=mouse_handler, 
+                                          events=['mousedown', 'mouseup'], 
+                                          cross=True) # show cross on hover
+
+        # what appears in realtime tab
+        # TODO: what are the needed params?
         with ui.tab_panel(realtime):
             ui.label('Realtime table')
 
