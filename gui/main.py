@@ -64,7 +64,7 @@ async def main(client: Client):
             from sparkline.chart_min_js import chart_min_js_str
             
             app.add_static_files('/sparkline', './sparkline')
-
+            
             with ui.column().classes('w-full items-center'):
                 plt.figure(figsize=(8, 6), dpi=80)
                 x = np.linspace(0.0, 5.0)
