@@ -1,6 +1,7 @@
 flask
 h5json==1.1.3
 h5pyd
+openpyxl
 python-dotenv
 requests
 xlrd
