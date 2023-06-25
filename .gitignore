@@ -5,6 +5,7 @@
 /data/raw
 /data/processed
 /api/__pycache__
+/api/queries
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
