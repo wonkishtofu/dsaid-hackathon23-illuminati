@@ -89,7 +89,7 @@ async def main(client: Client):
                 # if DWELLING.value == 'Landed Properties': # needs to happen on enter
                 # 3. if landed property, enter estimated roof area
                 ui.label('Estimate your roof area in m²')
-                ROOF_AREA = ui.slider(min = 10, max = 200, value = 50).classes('w-80')
+                ROOF_AREA = ui.slider(min = 10, max = 200, value = 10).classes('w-80')
                 ui.label().bind_text_from(ROOF_AREA, 'value')
                 
                 # button to generate estimate
