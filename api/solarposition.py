@@ -47,7 +47,7 @@ def get_suninfo(LAT, LON, DT):
     current_time = response['result']['uv_time']
     current_azimuth = np.rad2deg(response['result']['sun_info']['sun_position']['azimuth'])+180
     current_altitude = np.rad2deg(response['result']['sun_info']['sun_position']['altitude'])
-    
+
     print(f"\nThe current time is: {time_readable(utc_to_sgt(current_time))} \n\
 Current Solar Bearing: {to_bearing(current_azimuth)} \n\
 Current Solar Angle: {np.round(current_altitude,2)}° \n\
@@ -60,7 +60,9 @@ Today's Projected Solar Exposure: \n\
 \t {time_readable(utc_to_sgt(exposure_times['dusk']))} -- DUSK \n\n\
 Computing optimal tilt of solar panel ..."
 )
+    return exposure_times
     
+def get_optimal_angles(exposure_times):
     # get key solar position on notable dates and high demand times (-1.5 to +5 hours from solar noon)
     azimuth_angles = []
     altitude_angles = []

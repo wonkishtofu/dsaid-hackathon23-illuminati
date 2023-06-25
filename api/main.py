@@ -1,7 +1,7 @@
 # load functions from other scripts
 from conversions import to_bearing
 from geocode import geocode
-from solarposition import get_suninfo
+from solarposition import get_suninfo, get_optimal_angles
 from pvwatts import get_solar_estimate
 from demand import get_demand_estimate
 
@@ -19,7 +19,8 @@ ADDRESS = input("Enter an address in Singapore: ")
 LAT, LON = geocode(ADDRESS)
 DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) # UTC
 
-azimuth, tilt = get_suninfo(LAT, LON, DT)
+exposure_times = get_suninfo(LAT, LON, DT)
+azimuth, tilt = get_optimal_angles(exposure_times)
 
 print(f"Optimal azimuth = {np.round(azimuth, 2)} ({to_bearing(azimuth)}) \n\
 Optimal tilt = {np.round(tilt, 2)}")

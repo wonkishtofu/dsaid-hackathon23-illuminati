@@ -7,6 +7,8 @@ import pandas as pd
 import time
 
 # read demand data
+if '/gui' in os.getcwd():
+    os.chdir("../api")
 df = pd.read_excel("demand/SES_Public_2022_tidy.xlsx", sheet_name = "T3.5")
 
 def get_demand_estimate(DT, DWELLING):

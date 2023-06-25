@@ -1,5 +1,7 @@
 import os
+import calendar
 from datetime import datetime
+import time
 from typing import List, Tuple
 from uuid import uuid4
 
@@ -8,8 +10,16 @@ from matplotlib import pyplot as plt
 from nicegui import Client, app, ui
 from nicegui.events import MouseEventArguments
 
-messages: List[Tuple[str, str, str, str]] = []
+# import scripts to enable API linking
+import sys
+sys.path.insert(1, '../api/')
+from conversions import to_bearing
+from geocode import geocode
+from solarposition import get_suninfo, get_optimal_angles
+from pvwatts import get_solar_estimate
+from demand import get_demand_estimate
 
+messages: List[Tuple[str, str, str, str]] = []
 
 @ui.refreshable
 async def chat_messages(own_id: str) -> None:
@@ -36,7 +46,7 @@ async def main(client: Client):
     # define the tabs
     with ui.tabs().classes('w-full') as tabs:
         chatbot = ui.tab('CHATBOT')
-        sparkline = ui.tab('SPARKLINE')
+        sparkline = ui.tab('ESTIMATOR')
         realtime = ui.tab('REALTIME')
         
     # set tabs in a tab panel
@@ -64,6 +74,39 @@ async def main(client: Client):
         # what appears in sparkline tab
         with ui.tab_panel(sparkline):
             with ui.column().classes('w-full items-center'):
+                # create input fields
+                # 1. enter address
+                ADDRESS = ui.input(label = 'Enter an address or zipcode in Singapore', validation = {'Input too short': lambda value: len(value) >= 5}).classes('w-80')
+                ADDRESS.props('clearable')
+                
+                LAT, LON = geocode(ADDRESS.value) # needs to happen on enter
+                #LAT, LON = geocode(str(ADDRESS))
+                
+                # 2. enter dwelling type
+                dwelling_types = ['1-room / 2-room', '3-room', '4-room', '5-room and Executive', 'Landed Properties']
+                DWELLING = ui.select(label = 'Select dwelling type', options = dwelling_types, with_input = True).classes('w-80')
+                
+                # if DWELLING.value == 'Landed Properties': # needs to happen on enter
+                # 3. if landed property, enter estimated roof area
+                ui.label('Estimate your roof area in m²')
+                ROOF_AREA = ui.slider(min = 10, max = 200, value = 50).classes('w-80')
+                ui.label().bind_text_from(ROOF_AREA, 'value')
+                
+                # button to generate estimate
+                ui.button('Get Estimate!', on_click = lambda: ui.notify(f'Estimating your solar consumption and generation'))
+                
+                DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) # UTC
+                
+                exposure_times = get_suninfo(LAT, LON, DT) # needs to happen on enter
+                
+                if DT < exposure_times['dawn'] or DT > exposure_times['dusk']:
+                    icon = ui.image('./assets/nosun.svg').classes('w-16')
+                elif DT <= exposure_times['sunrise'] or DT >= exposure_times['sunset']:
+                    icon = ui.image('./assets/halfsun.svg').classes('w-16')
+                else:
+                    icon = ui.image('./assets/fullsun.svg').classes('w-16')
+                    
+                
                 # create plot using matplotlib.pyplot
                 plt.figure(figsize=(8, 6), dpi=80)
                 x = np.linspace(0.0, 5.0)
