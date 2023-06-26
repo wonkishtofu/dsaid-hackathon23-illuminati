@@ -1,3 +1,5 @@
+gpt_index==0.4.24
+langchain==0.0.215
+llama-index==0.6.33
 nicegui
-llama_index
-langchain
+requests==2.24.0

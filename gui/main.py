@@ -10,6 +10,7 @@ from matplotlib import pyplot as plt
 from nicegui import Client, app, ui
 from nicegui.events import MouseEventArguments
 
+# TODO: IMPORT FUNCTIONS FROM API FOLDER (SEE API/MAIN.PY FOR REQUIREMENTS)
 """
 # import scripts to enable API linking
 import sys
@@ -22,7 +23,7 @@ from pvwatts import get_solar_estimate
 from solarposition import get_optimal_angles, get_suninfo
 
 """
-
+# TODO: modularize hot loading LLM to make this script more readable and lightweight
 #########################
 # START HOT LOADING LLM #
 #########################
@@ -44,7 +45,7 @@ from llama_index.langchain_helpers.agents import (IndexToolConfig,
 from llama_index.query_engine.transform_query_engine import \
     TransformQueryEngine
 
-#adding Xuean's node post processor
+# adding Xuean's node post processor
 import sys
 sys.path.insert(1, '../chatbot/')
 from custom_node_processor import CustomSolarPostprocessor
@@ -54,13 +55,14 @@ from dotenv import find_dotenv, load_dotenv
 _ = load_dotenv(find_dotenv())
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
-#list ema docs
+# list ema docs
 ema = [1,2,3,4]
 
 UnstructuredReader = download_loader("UnstructuredReader", refresh_cache=True)
 loader = UnstructuredReader()
 doc_set = {}
 all_docs = []
+
 for ema_num in ema:
     ema_docs = loader.load_data(file=Path(f'../chatbot/data/EMA/EMA_{ema_num}.csv'), split_documents=False)
     # insert year metadata into each year
@@ -69,10 +71,9 @@ for ema_num in ema:
     doc_set[ema_num] = ema_docs
     all_docs.extend(ema_docs)
 
-"""### Setup a Vector Index for each EMA doc in the data file
-
+"""
+### Setup a Vector Index for each EMA doc in the data file
 We setup a separate vector index for each file
-
 We also optionally initialize a "global" index by dumping all files into the vector store.
 """
 
@@ -89,8 +90,8 @@ index_set = {}
 for ema_num in ema:
     index_set[ema_num] = cur_index
 
-"""### Composing a Graph to synthesize answers across all the existing EMA docs.
-
+"""
+### Composing a Graph to synthesize answers across all the existing EMA docs.
 We want our queries to aggregate/synthesize information across *all* docs. To do this, we define a List index
 on top of the 4 vector indices.
 """
@@ -111,8 +112,8 @@ graph = ComposableGraph.from_indices(
     service_context=service_context
 )
 
-"""## Setting up the Chatbot Agent
-
+"""
+## Setting up the Chatbot Agent
 We use Langchain to define the outer chatbot abstraction. We use LlamaIndex as a core Tool within this abstraction.
 """
 
@@ -187,7 +188,6 @@ agent_chain = create_llama_chat_agent(
 )
 
 inj = """
-
         Please respond to the statement above.
         Your name is Jamie Neo. Your pronouns are they/them.
         You are a Government Officer working for EMA in Singapore. You will answer only with reference to official documents from EMA.
@@ -214,9 +214,9 @@ thinking: bool = False
 
 # bot id and avatar
 bot_id = str('b15731ba-d28c-4a77-8076-b5750f5296d3')
-bot_avatar = f'https://robohash.org/{bot_id}?bgset=bg2'
+bot_avatar = f'https://robohash.org/{bot_id}?bgset=bg2' # TODO: find/create static icon for Jamie Neo
 
-# TODO: have bot say disclaimer
+# TODO: CREATE DISCLAIMER FOR BOT
 disclaimer = 'SOME DISCLAIMER'
 stamp = datetime.utcnow().strftime('%X')
 messages.append(('Bot', bot_avatar, disclaimer, stamp))
@@ -226,9 +226,10 @@ messages.append(('Bot', bot_avatar, disclaimer, stamp))
 async def chat_messages(own_id: str) -> None:
     for user_id, avatar, text, stamp in messages:
         ui.chat_message(text=text, stamp=stamp, avatar=avatar, sent=own_id == user_id)
-    if thinking:
-        ui.spinner(size='3rem').classes('self-center')
-    # await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond=False)
+    if thinking: # TODO: INSTANTANEOUS TEXT SEND (BUT UI.SPINNER UPON RESPONSE GENERATION)
+        ui.spinner(size='lg', color = 'yellow').classes('self-center')
+        #ui.spinner(size='3rem').classes('self-center')
+    await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond=False) # autoscroll
 
 
 @ui.page('/')
@@ -254,13 +255,14 @@ async def main(client: Client):
         # have to do this cos they are in footer
         avatar_ui.set_visibility(event.value == 'CHATBOT')
         text.set_visibility(event.value == 'CHATBOT')
-
-    # define the tabs
-    with ui.tabs().classes('w-full') as tabs:
-        chatbot = ui.tab('CHATBOT')
-        sparkline = ui.tab('ESTIMATOR')
-        realtime = ui.tab('REALTIME')
         
+    # define the tabs
+    with ui.header().classes(replace='row items-center') as header:
+        with ui.tabs().classes('w-full') as tabs:
+            chatbot = ui.tab('CHATBOT')
+            sparkline = ui.tab('ESTIMATOR')
+            realtime = ui.tab('REALTIME')
+
     # set tabs in a tab panel
     with ui.tab_panels(tabs,
                        value=chatbot,
@@ -278,20 +280,22 @@ async def main(client: Client):
                         ui.image(avatar)
                     text = ui.input(placeholder='message').on('keydown.enter', send) \
                         .props('rounded outlined input-class=mx-3').classes('flex-grow')
+                    # TODO: CLEAR TEXT (VALUE AND LABEL) UPON KEYDOWN.ENTER
+                    text.props('clearable') # button to clear type text
 
             await client.connected()  # chat_messages(...) uses run_javascript which is only possible after connecting
 
             with ui.column().classes('w-full max-w-2xl mx-auto items-stretch'):
                 await chat_messages(user_id)
+                # TODO: INSTANTANEOUS TEXT SEND (BUT UI.SPINNER UPON RESPONSE GENERATION)
             
         # what appears in sparkline tab
         with ui.tab_panel(sparkline):
             with ui.column().classes('w-full items-center'):
                 # create input fields
                 # 1. enter address
-                ADDRESS = ui.input(label = 'Enter an address or zipcode in Singapore', validation = {'Input too short': lambda value: len(value) >= 5}).classes('w-80')
-                ADDRESS.props('clearable')
-                
+                ADDRESS = ui.input(label = 'Enter an address or zipcode in Singapore', validation = {'Input too short': lambda value: len(value) >= 5}).props('clearable').classes('w-80')
+                ADDRESS.on('keydown.enter', lambda LAT, LON: geocode(ADDRESS.value))
                 #LAT, LON = geocode(ADDRESS.value) # needs to happen on enter
                 #LAT, LON = geocode(str(ADDRESS))
                 
@@ -348,4 +352,4 @@ async def main(client: Client):
                                             cross=True) # show cross on hover
                 ii.tooltip('After')
 
-ui.run(title="EMA")
+ui.run(title = "Jamie Neo [EMA]")
