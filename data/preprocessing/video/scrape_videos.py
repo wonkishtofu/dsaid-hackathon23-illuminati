@@ -12,21 +12,22 @@ output: transcript.json
 import csv
 import json
 import os.path
-import pandas as pd
 import random
+import urllib
+from collections import defaultdict
 from time import sleep
+from urllib.parse import parse_qs, urlparse
+
+import lxml
+import pandas as pd
+from lxml import etree
+
+from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api.formatters import JSONFormatter
 
 input_file = 'videos.csv' # file with YouTube video URLs
 URLs = pd.read_csv(input_file)['URL']
 
-from collections import defaultdict
-import lxml
-from lxml import etree
-import urllib
-from urllib.parse import urlparse
-from urllib.parse import parse_qs
-from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api.formatters import JSONFormatter
 
 save_df = pd.DataFrame(columns = ['URL', 'Title', 'Content'])
 

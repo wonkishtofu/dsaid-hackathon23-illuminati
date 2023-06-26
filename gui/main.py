@@ -1,7 +1,9 @@
-import os
 import calendar
-from datetime import datetime
+import os
+# import scripts to enable API linking
+import sys
 import time
+from datetime import datetime
 from typing import List, Tuple
 from uuid import uuid4
 
@@ -10,14 +12,13 @@ from matplotlib import pyplot as plt
 from nicegui import Client, app, ui
 from nicegui.events import MouseEventArguments
 
-# import scripts to enable API linking
-import sys
-sys.path.insert(1, '../api/')
 from conversions import to_bearing
-from geocode import geocode
-from solarposition import get_suninfo, get_optimal_angles
-from pvwatts import get_solar_estimate
 from demand import get_demand_estimate
+from geocode import geocode
+from pvwatts import get_solar_estimate
+from solarposition import get_optimal_angles, get_suninfo
+
+sys.path.insert(1, '../api/')
 
 messages: List[Tuple[str, str, str, str]] = []
 
@@ -99,14 +100,19 @@ async def main(client: Client):
                 
                 exposure_times = get_suninfo(LAT, LON, DT) # needs to happen on enter
                 
-                if DT < exposure_times['dawn'] or DT > exposure_times['dusk']:
-                    icon = ui.image('./assets/nosun.svg').classes('w-16')
-                elif DT <= exposure_times['sunrise'] or DT >= exposure_times['sunset']:
-                    icon = ui.image('./assets/halfsun.svg').classes('w-16')
-                else:
-                    icon = ui.image('./assets/fullsun.svg').classes('w-16')
-                    
-                
+                # if DT < exposure_times['dawn'] or DT > exposure_times['dusk']:
+                #     icon = ui.image('./assets/nosun.svg').classes('w-16')
+                # elif DT <= exposure_times['sunrise'] or DT >= exposure_times['sunset']:
+                #     icon = ui.image('./assets/halfsun.svg').classes('w-16')
+                # else:
+                #     icon = ui.image('./assets/fullsun.svg').classes('w-16')
+
+        # what appears in realtime tab
+        # TODO: what are the needed params?
+        with ui.tab_panel(realtime):
+            with ui.column().classes('w-full items-center'):
+                ui.label('Realtime table')
+
                 # create plot using matplotlib.pyplot
                 plt.figure(figsize=(8, 6), dpi=80)
                 x = np.linspace(0.0, 5.0)
@@ -116,21 +122,18 @@ async def main(client: Client):
                 plt.savefig('./assets/sparkline_table.png')
                 app.add_static_files('/assets/', './assets/')
                 
-                # what happens when mousedown/mouseup, basically adds a circle now
                 def mouse_handler(e: MouseEventArguments):
-                    color = 'SkyBlue' if e.type == 'mousedown' else 'SteelBlue'
-                    ii.content += f'<circle cx="{e.image_x}" cy="{e.image_y}" r="15" fill="none" stroke="{color}" stroke-width="4" />'
-                    ui.notify(f'{e.type} at ({e.image_x:.1f}, {e.image_y:.1f})')
+                    print(e)
+                    ii.tooltip(f'{e.image_x}, {e.image_y}')
+                    ii.update()
+                    # ii.content += f'<circle cx="{e.image_x}" cy="{e.image_y}" r="15" fill="none" stroke="{color}" stroke-width="4" />'
+                    # ui.notify(f'{e.type} at ({e.image_x:.1f}, {e.image_y:.1f})')
 
                 
                 ii = ui.interactive_image('./assets/sparkline_table.png',
-                                          on_mouse=mouse_handler,
-                                          events=['mousedown', 'mouseup'],
-                                          cross=True) # show cross on hover
-
-        # what appears in realtime tab
-        # TODO: what are the needed params?
-        with ui.tab_panel(realtime):
-            ui.label('Realtime table')
+                                            on_mouse=mouse_handler,
+                                            events=['click'],
+                                            cross=True) # show cross on hover
+                ii.tooltip('After')
 
 ui.run()

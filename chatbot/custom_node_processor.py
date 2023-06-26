@@ -1,16 +1,18 @@
 """Custom node post-processor for EMA solar chatbot."""
 
-from llama_index.indices.postprocessor.node import BasePydanticNodePostprocessor
+from datetime import datetime, timedelta
+from typing import List, Optional, Set, cast
+
+import numpy as np
+import pandas as pd
+from pydantic import Field
+
+from llama_index.data_structs.node import NodeWithScore
+from llama_index.indices.postprocessor.node import \
+    BasePydanticNodePostprocessor
 from llama_index.indices.query.schema import QueryBundle
 from llama_index.indices.service_context import ServiceContext
-from llama_index.data_structs.node import NodeWithScore
 from llama_index.prompts.prompts import SimpleInputPrompt
-from pydantic import Field
-from typing import Optional, List, Set, cast
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-
 
 #Template to assess if query is about stats/data
 DEFAULT_INFER_STATS_TMPL = (
@@ -111,4 +113,3 @@ class CustomSolarPostprocessor(BasePydanticNodePostprocessor):
                 return non_Min[: self.top_k_min]
             else:
                 return Min_only[: self.top_k_min]
-        

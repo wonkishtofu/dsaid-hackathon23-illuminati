@@ -1,17 +1,17 @@
 # load functions from other scripts
-from conversions import to_bearing
-from geocode import geocode
-from solarposition import get_suninfo, get_optimal_angles
-from pvwatts import get_solar_estimate
-from demand import get_demand_estimate
-
 import calendar
-from datetime import datetime
-import numpy as np
 import os
-import pandas as pd
 import time
+from datetime import datetime
 
+import numpy as np
+import pandas as pd
+
+from conversions import to_bearing
+from demand import get_demand_estimate
+from geocode import geocode
+from pvwatts import get_solar_estimate
+from solarposition import get_optimal_angles, get_suninfo
 
 # SUPPLY
 ADDRESS = input("Enter an address in Singapore: ")

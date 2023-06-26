@@ -9,14 +9,16 @@ Feed the transcript to ChatGPT and ask it to generate a table of Q&A pairs
 output: transcript.json
 """
 
-from bs4 import BeautifulSoup
 import csv
 import json
 import os.path
-import pandas as pd
 import random
-import requests
 from time import sleep
+
+import pandas as pd
+import requests
+
+from bs4 import BeautifulSoup
 
 input_file = 'websites.csv' # file with website URLs
 URLs = pd.read_csv(input_file)['URL']

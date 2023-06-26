@@ -1,14 +1,16 @@
-from conversions import * # import FUNCTION to convert angle to N/S/E/W bearing
-from datetime import datetime, timedelta
-from dateutil import tz
-from dotenv import load_dotenv, find_dotenv
 import json
-import numpy as np
 import os
-import pandas as pd
-import requests
 import sys
 import time
+from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
+import requests
+from dateutil import tz
+from dotenv import find_dotenv, load_dotenv
+
+from conversions import *  # import FUNCTION to convert angle to N/S/E/W bearing
 
 # read local .env file and store API keys
 _ = load_dotenv(find_dotenv())

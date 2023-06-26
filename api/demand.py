@@ -1,10 +1,11 @@
 # load functions from other scripts
 import calendar
-from datetime import datetime
-import numpy as np
 import os
-import pandas as pd
 import time
+from datetime import datetime
+
+import numpy as np
+import pandas as pd
 
 # read demand data
 if '/gui' in os.getcwd():

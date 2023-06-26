@@ -6,21 +6,22 @@ dependency: requirements.txt, all scraped raw data files in ../../raw/
 outputs: raw_data_summaries_sample.csv, raw_data_qna_sample.csv
 """
 
-import backoff
 import csv
-from dotenv import load_dotenv, find_dotenv
 import json
-import openai
 import os
-import pandas as pd
 import random
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_random_exponential,
-)  # for exponential backoff (to overcome rate limit)
 import time
+
+import pandas as pd
+from dotenv import find_dotenv, load_dotenv
+from tenacity import retry  # for exponential backoff (to overcome rate limit)
 from transformers import pipeline
+
+import backoff
+import openai
+
+                      stop_after_attempt, wait_random_exponential)
+
 
 """ LOAD OPENAI_API_KET FROM ENV """
 _ = load_dotenv(find_dotenv()) # read local .env file
