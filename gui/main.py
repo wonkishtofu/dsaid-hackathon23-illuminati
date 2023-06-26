@@ -53,12 +53,12 @@ async def main(client: Client):
     with ui.tab_panels(tabs,
                        value=chatbot,
                        on_change=on_tab_change).classes('w-full'):
-
+        
         # what appears in chatbot tab
         with ui.tab_panel(chatbot):
             user_id = str(uuid4())
             avatar = f'https://robohash.org/{user_id}?bgset=bg2'
-
+            
             with ui.footer().classes('bg-white'), ui.column().classes('w-full max-w-3xl mx-auto my-6'):
                 with ui.row().classes('w-full no-wrap items-center'):
                     avatar_ui = ui.avatar().on('click', lambda: ui.open(main))
@@ -79,7 +79,7 @@ async def main(client: Client):
                 ADDRESS = ui.input(label = 'Enter an address or zipcode in Singapore', validation = {'Input too short': lambda value: len(value) >= 5}).classes('w-80')
                 ADDRESS.props('clearable')
                 
-                LAT, LON = geocode(ADDRESS.value) # needs to happen on enter
+                #LAT, LON = geocode(ADDRESS.value) # needs to happen on enter
                 #LAT, LON = geocode(str(ADDRESS))
                 
                 # 2. enter dwelling type
@@ -92,12 +92,12 @@ async def main(client: Client):
                 ROOF_AREA = ui.slider(min = 10, max = 200, value = 10).classes('w-80')
                 ui.label().bind_text_from(ROOF_AREA, 'value')
                 
-                # button to generate estimate
+                # button to generate estimate (needs to trigger the usage of user inputs to compute)
                 ui.button('Get Estimate!', on_click = lambda: ui.notify(f'Estimating your solar consumption and generation'))
                 
                 DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) # UTC
                 
-                exposure_times = get_suninfo(LAT, LON, DT) # needs to happen on enter
+                # exposure_times = get_suninfo(LAT, LON, DT) # needs to happen on enter
                 
                 # if DT < exposure_times['dawn'] or DT > exposure_times['dusk']:
                 #     icon = ui.image('./assets/nosun.svg').classes('w-16')
@@ -105,7 +105,7 @@ async def main(client: Client):
                 #     icon = ui.image('./assets/halfsun.svg').classes('w-16')
                 # else:
                 #     icon = ui.image('./assets/fullsun.svg').classes('w-16')
-
+                
         # what appears in realtime tab
         # TODO: what are the needed params?
         with ui.tab_panel(realtime):
