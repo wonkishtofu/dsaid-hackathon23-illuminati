@@ -30,11 +30,14 @@ def geocode(ADDRESS):
     
     assert response['results'][0]['address']['country'] == "Singapore", "Oops! The address you have queried was not found in Singapore."
 
-    print("The address you are querying is: {}".format(response['results'][0]['address']['freeformAddress']))
-    
     LAT = response['results'][0]['position']['lat']
     LON = response['results'][0]['position']['lon']
-    print(f"""This address has the following coordinates:
+    
+    if response['results'][0]['address']['freeformAddress'] == "Singapore":
+        print("The address you are querying is too general. Providing you with an island-wide average estimate instead.")
+    else:
+        print("The address you are querying is: {}".format(response['results'][0]['address']['freeformAddress']))
+        print(f"""This address has the following coordinates:
     Latitude: {LAT}
     Longitude: {LON}""")
     
