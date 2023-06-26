@@ -28,7 +28,7 @@ def geocode(ADDRESS):
     response = requests.get(f"https://api.tomtom.com/search/2/geocode/{ADDRESS}.json?storeResult=false&view=Unified&key={TOMTOM_API_KEY}").json()
     
     assert response['results'][0]['address']['country'] == "Singapore", "Oops! The address you have queried was not found in Singapore."
-    
+
     print("The address you are querying is: {}".format(response['results'][0]['address']['freeformAddress']))
     
     LAT = response['results'][0]['position']['lat']
@@ -36,5 +36,5 @@ def geocode(ADDRESS):
     print(f"""This address has the following coordinates:
     Latitude: {LAT}
     Longitude: {LON}""")
-        
+    
     return LAT, LON

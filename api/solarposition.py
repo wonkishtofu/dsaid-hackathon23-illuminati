@@ -62,7 +62,7 @@ Computing optimal tilt of solar panel ..."
 )
     return exposure_times
     
-def get_optimal_angles(exposure_times):
+def get_optimal_angles(LAT, LON, exposure_times):
     # get key solar position on notable dates and high demand times (-1.5 to +5 hours from solar noon)
     azimuth_angles = []
     altitude_angles = []
@@ -77,6 +77,7 @@ def get_optimal_angles(exposure_times):
             query = date + time
             
             url = f"https://api.openuv.io/api/v1/uv?lat={LAT}&lng={LON}&alt=15&dt={query}"
+            headers = {'x-access-token': OPENUV_API_KEY}
             response = requests.get(url, headers = headers).json()
             
             azimuth_angles.append(np.rad2deg(response['result']['sun_info']['sun_position']['azimuth']) + 180)
