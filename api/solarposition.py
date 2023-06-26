@@ -19,6 +19,17 @@ OPENUV_API_KEY = os.environ['OPENUV_API_KEY']
 # query solar position on notable dates: perihelion, 2 x solstice, 2 x equinox
 notable_dates = ['2023-01-03', '2023-03-21', '2023-06-21', '2023-09-22', '2023-12-22']
 
+def get_weather(current_uv, current_time):
+    hh = float(current_time[:current_time.find(" ")][:2])
+    mm = float(current_time[:current_time.find(" ")][3:])
+    x = hh + mm/60
+    uv_normal = -0.376*x*x+9.88*x-50.89 # UV as a function of time, x
+    
+    if current_uv < 0.85*uv_normal: # if < 85% of normal, assume cloudy
+        return "cloudy"
+    else:
+        return "normal"
+
 """
 2. SUN POSITION API (OPENUV):
 Get position of the sun at notable dates and times in the year to compute optimal tilt of solar panel for energy generation
@@ -47,12 +58,14 @@ def get_suninfo(LAT, LON, DT):
         exposure_times[key] = response['result']['sun_info']['sun_times'][key]
     
     current_time = response['result']['uv_time']
+    current_uv = response['result']['uv']
     current_azimuth = np.rad2deg(response['result']['sun_info']['sun_position']['azimuth'])+180
     current_altitude = np.rad2deg(response['result']['sun_info']['sun_position']['altitude'])
 
     print(f"\nThe current time is: {time_readable(utc_to_sgt(current_time))} \n\
 Current Solar Bearing: {to_bearing(current_azimuth)} \n\
 Current Solar Angle: {np.round(current_altitude,2)}° \n\
+Current Weather:  {get_weather(current_uv, time_readable(utc_to_sgt(current_time)))}\n\
 \n\
 Today's Projected Solar Exposure: \n\
 \t {time_readable(utc_to_sgt(exposure_times['dawn']))} -- DAWN \n\
@@ -70,7 +83,7 @@ def get_optimal_angles(LAT, LON, exposure_times):
     altitude_angles = []
     
     for date in notable_dates:
-        for delta in [4.75, 5.75, 6.75]:
+        for delta in [5.75]:
             time = exposure_times['solarNoon'][exposure_times['solarNoon'].find("T")+1:-1]
             time = datetime.strptime(time, "%H:%M:%S.%f")
             time += timedelta(hours = delta)

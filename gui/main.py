@@ -187,7 +187,7 @@ agent_chain = create_llama_chat_agent(
 inj = """
         Please respond to the statement above.
         Your name is Jamie Neo. Your pronouns are they/them.
-        You are an AI Chatbot created to support the Energy Market Authority (EMA) in Singapore. You will answer only with reference to official documents from EMA.
+        You are an AI Chatbot created to support EMA in Singapore. You will answer only with reference to official documents from EMA.
         Refer to the context FAQs and the EMA documents in composing your answers.
         If the user is unclear, you can ask the user to clarify the question.
         When in doubt and/or the answer is not in the EMA documents, you can say "I am sorry but do not know the answer. Please get in touch with EMA through this webpage: https://www.ema.gov.sg/contact_us.aspx".
@@ -214,7 +214,7 @@ bot_id = str('b15731ba-d28c-4a77-8076-b5750f5296d3')
 bot_avatar = f'https://robohash.org/{bot_id}?bgset=bg2' # TODO: find/create static icon for Jamie Neo
 
 # TODO: CREATE DISCLAIMER FOR BOT
-disclaimer = 'SOME DISCLAIMER'
+disclaimer = "Hello there! I am Jamie Neo, an AI chatbot with a sunny disposition 😎 I'm here to help the Energy Market Authority (EMA) answer your questions about solar energy in Singapore."
 stamp = datetime.utcnow().strftime('%X')
 messages.append(('Bot', bot_avatar, disclaimer, stamp))
 
