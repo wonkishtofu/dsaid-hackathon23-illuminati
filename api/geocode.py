@@ -34,7 +34,7 @@ def geocode(ADDRESS):
     LON = response['results'][0]['position']['lon']
     
     if response['results'][0]['address']['freeformAddress'] == "Singapore":
-        print("The address you are querying is too general. Providing you with an island-wide average estimate instead.")
+        print("The address you are querying is too general. Providing an island-averaged estimate instead.")
     else:
         print("The address you are querying is: {}".format(response['results'][0]['address']['freeformAddress']))
         print(f"""This address has the following coordinates:
