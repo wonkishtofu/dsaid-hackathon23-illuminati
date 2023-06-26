@@ -25,10 +25,10 @@ azimuth, tilt = get_optimal_angles(LAT, LON, exposure_times)
 print(f"Optimal azimuth = {np.round(azimuth, 2)} ({to_bearing(azimuth)}) \n\
 Optimal tilt = {np.round(tilt, 2)}")
 
-AC_output = get_solar_estimate(LAT, LON, ADDRESS, azimuth, tilt)
+AC_output = get_solar_estimate(LAT, LON, azimuth, tilt)
 
 
-# DEMAND
+# DEMANDs
 DWELLING = input("\nEnter dwelling type: ")
 
 if DWELLING == 'Landed Property':

@@ -18,7 +18,7 @@ PVWATTS_API_KEY  = os.environ['PVWATTS_API_KEY']
 Get monthly solar irradiance, DC output, AC output, weather station information
 """
 
-def get_solar_estimate(LAT, LON, ADDRESS, azimuth, tilt):
+def get_solar_estimate(LAT, LON, azimuth, tilt):
     url = 'https://developer.nrel.gov/api/pvwatts/v6.json'
 
     # Set the parameters for the request
@@ -37,17 +37,6 @@ def get_solar_estimate(LAT, LON, ADDRESS, azimuth, tilt):
 
     response = requests.get(url, params = parameters).json()
     
-    # create directory to store data (or if it already exists, enter directory)
-    path = "queries"
-    exists = os.path.exists(path)
-    if not exists:
-        os.makedirs(path)
-    os.chdir(path)
-    
-    with open(ADDRESS + ".json", "w") as file:
-        json.dump(response, file, indent = 4)
-                
-    print(f"Generated a JSON file containing solar PV output estimates. \n \
-Estimates are based on real weather observed at Station No. {response['station_info']['location']}, located {response['station_info']['distance']} m away from your input address.")
+    print(f"Estimates are based on real weather observed at Station No. {response['station_info']['location']}, located {response['station_info']['distance']} m away from queried address.")
     
     return response['outputs']['ac']

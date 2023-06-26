@@ -7,7 +7,7 @@ from uuid import uuid4
 
 import numpy as np
 from matplotlib import pyplot as plt
-from nicegui import Client, app, ui
+from nicegui import Tailwind, Client, app, ui
 from nicegui.events import MouseEventArguments
 
 # import functions from API folder for estimator tab
@@ -187,11 +187,12 @@ agent_chain = create_llama_chat_agent(
 inj = """
         Please respond to the statement above.
         Your name is Jamie Neo. Your pronouns are they/them.
-        You are an AI Chatbot created to support EMA in Singapore. You will answer only with reference to official documents from EMA.
-        Refer to the context FAQs and the EMA documents in composing your answers.
+        You are an AI chatbot created to support EMA by answering questions about solar energy in Singapore.
+        You will answer only with reference to official documents from EMA.
+        Refer to the context FAQs and the EMA documents in composing your answers. Define terms if needed.
         If the user is unclear, you can ask the user to clarify the question.
-        When in doubt and/or the answer is not in the EMA documents, you can say "I am sorry but do not know the answer. Please get in touch with EMA through this webpage: https://www.ema.gov.sg/contact_us.aspx".
-        Keep your answers short and as terse as possible. Be polite at all times.
+        When in doubt and/or the answer is not in the EMA documents, you can say "I am sorry but do not know the answer. Please get in touch with EMA through this webpage: https://www.ema.gov.sg/contact_us.aspx"
+        Keep your answers short and terse. Be polite at all times.
     """
 
 def get_chatbot_respone(text_input):
@@ -211,40 +212,45 @@ thinking: bool = False
 
 # bot id and avatar
 bot_id = str('b15731ba-d28c-4a77-8076-b5750f5296d3')
-bot_avatar = f'https://robohash.org/{bot_id}?bgset=bg2' # TODO: find/create static icon for Jamie Neo
+bot_avatar = f'https://robohash.org/{bot_id}?bgset=bg2'
 
-# TODO: CREATE DISCLAIMER FOR BOT
-disclaimer = "Hello there! I am Jamie Neo, an AI chatbot with a sunny disposition 😎 I'm here to help the Energy Market Authority (EMA) answer your questions about solar energy in Singapore."
+disclaimer = "Hello there! I am Jamie Neo, an AI chatbot with a sunny disposition 😎 On behalf of the Energy Market Authority (EMA), I'm here to answer your questions about solar energy in Singapore."
 stamp = datetime.utcnow().strftime('%X')
 messages.append(('Bot', bot_avatar, disclaimer, stamp))
 
-
+# refresh function for CHATBOT
 @ui.refreshable
 async def chat_messages(own_id: str) -> None:
     for user_id, avatar, text, stamp in messages:
-        ui.chat_message(text=text, stamp=stamp, avatar=avatar, sent=own_id == user_id)
-    if thinking: # TODO: INSTANTANEOUS TEXT SEND (BUT UI.SPINNER UPON RESPONSE GENERATION)
-        ui.spinner(size='lg', color = 'yellow').classes('self-center')
+        ui.chat_message(text = text, stamp = stamp, avatar = avatar, sent = own_id == user_id)
+    if thinking:
+        # TODO: SHOW UI.SPINNER BEFORE RESPONSE GENERATION
+        ui.spinner(size = 'lg', color = 'yellow')
+        ui.classes('self-center')
         #ui.spinner(size='3rem').classes('self-center')
-    await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond=False) # autoscroll
+    await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
+
+# refresh function for ESTIMATOR
+@ui.refreshable
 
 
 @ui.page('/')
 async def main(client: Client):
     async def send() -> None:
-        global thinking
         stamp = datetime.utcnow().strftime('%X')
         user_input = text.value
         messages.append((user_id, avatar, user_input, stamp))
+        chat_messages.refresh()
         thinking = True
         text.value = ''
-        chat_messages.refresh()
+        # TODO: CLEAR TEXT UPON SEND
+        # TODO: DECREASE LAG BETWEEN SEND AND APPEAR IN CONVERSATION
+        text.label = ''
 
         response = get_chatbot_respone(user_input)
         stamp = datetime.utcnow().strftime('%X')
         messages.append(('Bot', bot_avatar, response, stamp))
         thinking = False
-        # chat_messages.refresh()
 
     def on_tab_change(event):
         print(event.value)
@@ -254,12 +260,12 @@ async def main(client: Client):
         text.set_visibility(event.value == 'CHATBOT')
         
     # define the tabs
-    with ui.header().classes(replace='row items-center') as header:
+    with ui.header().classes(replace = 'row items-center') as header:
         with ui.tabs().classes('w-full') as tabs:
             chatbot = ui.tab('CHATBOT')
             sparkline = ui.tab('ESTIMATOR')
             realtime = ui.tab('REALTIME')
-
+    
     # set tabs in a tab panel
     with ui.tab_panels(tabs,
                        value=chatbot,
@@ -270,21 +276,20 @@ async def main(client: Client):
             user_id = str('6af9dba1-022a-41ba-8f5b-34c21d1cc89a')
             avatar = f'https://robohash.org/{user_id}?bgset=bg2'
             
+            # TODO: change color of speech bubble for something less jarring
             with ui.footer().classes('bg-white'), ui.column().classes('w-full max-w-3xl mx-auto my-6'):
                 with ui.row().classes('w-full no-wrap items-center'):
                     avatar_ui = ui.avatar().on('click', lambda: ui.open(main))
                     with avatar_ui:
                         ui.image(avatar)
-                    text = ui.input(placeholder='message').on('keydown.enter', send) \
-                        .props('rounded outlined input-class=mx-3').classes('flex-grow')
-                    # TODO: CLEAR TEXT (VALUE AND LABEL) UPON KEYDOWN.ENTER
+                    text = ui.input(placeholder = 'type your query here').on('keydown.enter', send) \
+                        .props('rounded outlined input-class=mx-6').classes('flex-grow')
                     text.props('clearable') # button to clear type text
             
             await client.connected()  # chat_messages(...) uses run_javascript which is only possible after connecting
 
             with ui.column().classes('w-full max-w-2xl mx-auto items-stretch'):
                 await chat_messages(user_id)
-                # TODO: INSTANTANEOUS TEXT SEND (BUT UI.SPINNER UPON RESPONSE GENERATION)
             
         # what appears in estimator tab
         with ui.tab_panel(sparkline):
@@ -297,7 +302,8 @@ async def main(client: Client):
                 dwelling_types = ['1-room / 2-room', '3-room', '4-room', '5-room and Executive', 'Landed Property']
                 DWELLING = ui.select(label = 'Select dwelling type', options = dwelling_types, with_input = True).classes('w-80')
                 
-                if DWELLING.value == 'Landed Property': # TODO: ASK FOR ROOF AREA UPON CHOOSING LANDED PROPERTY
+                # TODO: ASK FOR ROOF AREA UPON CHOOSING LANDED PROPERTY
+                if DWELLING.value == 'Landed Property':
                 # 3. if landed property, enter estimated roof area
                     ui.label('Estimate your roof area in m²')
                     ROOF_AREA = ui.slider(min = 10, max = 200, value = 10).classes('w-80')
@@ -308,16 +314,7 @@ async def main(client: Client):
                 
                 LAT, LON = geocode(ADDRESS.value) # TODO: RUN GEOCODE FUNCTION UPON BUTTON CLICK
                 DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) # UTC
-                cloudy, exposure_times = get_suninfo(LAT, LON, DT) # needs to happen on enter
-                
-                if DT < exposure_times['dawn'] or DT > exposure_times['dusk']:
-                    icon = ui.image('./assets/nosun.svg').classes('w-16')
-                elif DT <= exposure_times['sunrise'] or DT >= exposure_times['sunset']:
-                    icon = ui.image('./assets/halfsun.svg').classes('w-16')
-                elif cloudy == True:
-                    icon = ui.image('./assets/cloudysun.svg').classes('w-16')
-                else:
-                    icon = ui.image('./assets/fullsun.svg').classes('w-16')
+                exposure_times = get_suninfo(LAT, LON, DT) # needs to happen on enter
                 
         # what appears in realtime tab
         # TODO: what are the needed params?
