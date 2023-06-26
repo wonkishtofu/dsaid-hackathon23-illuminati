@@ -12,16 +12,13 @@ from nicegui.events import MouseEventArguments
 
 # TODO: IMPORT FUNCTIONS FROM API FOLDER (SEE API/MAIN.PY FOR REQUIREMENTS)
 """
-# import scripts to enable API linking
 import sys
-sys.path.insert(1, '../api/')
-
+sys.path.insert(0, r'.../dsaid-hackathon23-illuminati/api/')
 from conversions import to_bearing
 from demand import get_demand_estimate
 from geocode import geocode
 from pvwatts import get_solar_estimate
 from solarposition import get_optimal_angles, get_suninfo
-
 """
 # TODO: modularize hot loading LLM to make this script more readable and lightweight
 #########################
@@ -47,8 +44,8 @@ from llama_index.query_engine.transform_query_engine import \
 
 # adding Xuean's node post processor
 import sys
-#sys.path.insert(1, '../chatbot/')
-sys.path.insert(0, r'.../dsaid-hackathon23-illuminati/chatbot/') #Xuean's edit - original line didn't work on my laptop
+# sys.path.insert(1, '../chatbot/')
+sys.path.insert(0, r'.../dsaid-hackathon23-illuminati/chatbot/') # Xuean's edit - original line didn't work on my laptop
 from custom_node_processor import CustomSolarPostprocessor
 
 from dotenv import find_dotenv, load_dotenv
@@ -283,20 +280,21 @@ async def main(client: Client):
                         .props('rounded outlined input-class=mx-3').classes('flex-grow')
                     # TODO: CLEAR TEXT (VALUE AND LABEL) UPON KEYDOWN.ENTER
                     text.props('clearable') # button to clear type text
-
+            
             await client.connected()  # chat_messages(...) uses run_javascript which is only possible after connecting
 
             with ui.column().classes('w-full max-w-2xl mx-auto items-stretch'):
                 await chat_messages(user_id)
                 # TODO: INSTANTANEOUS TEXT SEND (BUT UI.SPINNER UPON RESPONSE GENERATION)
             
-        # what appears in sparkline tab
+        # what appears in estimator tab
         with ui.tab_panel(sparkline):
             with ui.column().classes('w-full items-center'):
                 # create input fields
                 # 1. enter address
                 ADDRESS = ui.input(label = 'Enter an address or zipcode in Singapore', validation = {'Input too short': lambda value: len(value) >= 5}).props('clearable').classes('w-80')
                 ADDRESS.on('keydown.enter', lambda LAT, LON: geocode(ADDRESS.value))
+                print(LAT, LON)
                 #LAT, LON = geocode(ADDRESS.value) # needs to happen on enter
                 #LAT, LON = geocode(str(ADDRESS))
                 
