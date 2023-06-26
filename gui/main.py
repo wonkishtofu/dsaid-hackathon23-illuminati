@@ -1,7 +1,5 @@
 import calendar
 import os
-# import scripts to enable API linking
-import sys
 import time
 from datetime import datetime
 from typing import List, Tuple
@@ -12,14 +10,15 @@ from matplotlib import pyplot as plt
 from nicegui import Client, app, ui
 from nicegui.events import MouseEventArguments
 
+"""
+# import scripts to enable API linking
+import sys
 from conversions import to_bearing
 from demand import get_demand_estimate
 from geocode import geocode
 from pvwatts import get_solar_estimate
 from solarposition import get_optimal_angles, get_suninfo
-
-sys.path.insert(1, '../api/')
-
+"""
 messages: List[Tuple[str, str, str, str]] = []
 
 @ui.refreshable
