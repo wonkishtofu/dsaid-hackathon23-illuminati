@@ -12,30 +12,63 @@ from matplotlib import pyplot as plt
 from nicegui import Client, app, ui
 from nicegui.events import MouseEventArguments
 
+sys.path.insert(1, '../api/')
 from conversions import to_bearing
 from demand import get_demand_estimate
 from geocode import geocode
 from pvwatts import get_solar_estimate
 from solarposition import get_optimal_angles, get_suninfo
 
-sys.path.insert(1, '../api/')
+#########################
+# START HOT LOADING LLM #
+#########################
+
+
+#######################
+# END HOT LOADING LLM #
+#######################
+
+#############
+# START GUI #
+#############
 
 messages: List[Tuple[str, str, str, str]] = []
+thinking: bool = False
+
+# bot id and avatar
+bot_id = str('b15731ba-d28c-4a77-8076-b5750f5296d3')
+bot_avatar = f'https://robohash.org/{bot_id}?bgset=bg2'
+
+# TODO: have bot say disclaimer
+disclaimer = 'SOME DISCLAIMER'
+stamp = datetime.utcnow().strftime('%X')
+messages.append(('Bot', bot_avatar, disclaimer, stamp))
+
 
 @ui.refreshable
 async def chat_messages(own_id: str) -> None:
     for user_id, avatar, text, stamp in messages:
         ui.chat_message(text=text, stamp=stamp, avatar=avatar, sent=own_id == user_id)
-    await ui.run_javascript('window.scrollTo(0, document.body.scrollHeight)', respond=False)
+    if thinking:
+        ui.spinner(size='3rem').classes('self-center')
+    # await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond=False)
 
 
 @ui.page('/')
 async def main(client: Client):
-    def send() -> None:
+    async def send() -> None:
+        global thinking
         stamp = datetime.utcnow().strftime('%X')
         messages.append((user_id, avatar, text.value, stamp))
+        thinking = True
         text.value = ''
         chat_messages.refresh()
+
+        response = 'Test response'
+        stamp = datetime.utcnow().strftime('%X')
+        messages.append(('Bot', bot_avatar, response, stamp))
+        thinking = False
+        # chat_messages.refresh()
 
     def on_tab_change(event):
         print(event.value)
@@ -57,7 +90,7 @@ async def main(client: Client):
 
         # what appears in chatbot tab
         with ui.tab_panel(chatbot):
-            user_id = str(uuid4())
+            user_id = str('6af9dba1-022a-41ba-8f5b-34c21d1cc89a')
             avatar = f'https://robohash.org/{user_id}?bgset=bg2'
 
             with ui.footer().classes('bg-white'), ui.column().classes('w-full max-w-3xl mx-auto my-6'):
@@ -69,6 +102,7 @@ async def main(client: Client):
                         .props('rounded outlined input-class=mx-3').classes('flex-grow')
 
             await client.connected()  # chat_messages(...) uses run_javascript which is only possible after connecting
+
             with ui.column().classes('w-full max-w-2xl mx-auto items-stretch'):
                 await chat_messages(user_id)
             
@@ -136,4 +170,4 @@ async def main(client: Client):
                                             cross=True) # show cross on hover
                 ii.tooltip('After')
 
-ui.run()
+ui.run(title="EMA")
