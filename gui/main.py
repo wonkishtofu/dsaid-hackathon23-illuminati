@@ -10,16 +10,15 @@ from matplotlib import pyplot as plt
 from nicegui import Client, app, ui
 from nicegui.events import MouseEventArguments
 
-# TODO: IMPORT FUNCTIONS FROM API FOLDER (SEE API/MAIN.PY FOR REQUIREMENTS)
-"""
+# import functions from API folder for estimator tab
 import sys
-sys.path.insert(0, r'.../dsaid-hackathon23-illuminati/api/')
+sys.path.insert(0, r'../api/')
 from conversions import to_bearing
 from demand import get_demand_estimate
 from geocode import geocode
 from pvwatts import get_solar_estimate
 from solarposition import get_optimal_angles, get_suninfo
-"""
+
 # TODO: modularize hot loading LLM to make this script more readable and lightweight
 #########################
 # START HOT LOADING LLM #
@@ -44,8 +43,8 @@ from llama_index.query_engine.transform_query_engine import \
 
 # adding Xuean's node post processor
 import sys
-# sys.path.insert(1, '../chatbot/')
-sys.path.insert(0, r'.../dsaid-hackathon23-illuminati/chatbot/') # Xuean's edit - original line didn't work on my laptop
+sys.path.insert(0, '../chatbot/')
+#sys.path.insert(0, r'.../dsaid-hackathon23-illuminati/chatbot/') # Xuean's edit - original line didn't work on my laptop
 from custom_node_processor import CustomSolarPostprocessor
 
 from dotenv import find_dotenv, load_dotenv
@@ -191,12 +190,12 @@ inj = """
         You are a Government Officer working for EMA in Singapore. You will answer only with reference to official documents from EMA.
         Refer to the context FAQs and the EMA documents in composing your answers.
         If the user is unclear, you can ask the user to clarify the question.
-        When in doubt,and/or the answer is not in the EMA documents, you can say "I am sorry but do not know the answer".
+        When in doubt and/or the answer is not in the EMA documents, you can say "I am sorry but do not know the answer".
         Keep your answers short and as terse as possible. Be polite at all times.
     """
 
 def get_chatbot_respone(text_input):
-    return agent_chain.run(input= text_input + inj)
+    return agent_chain.run(input = text_input + inj)
 
 
 #######################
@@ -233,11 +232,11 @@ async def chat_messages(own_id: str) -> None:
 @ui.page('/')
 async def main(client: Client):
     async def send() -> None:
-        global thinking
+        #global thinking
         stamp = datetime.utcnow().strftime('%X')
         user_input = text.value
         messages.append((user_id, avatar, user_input, stamp))
-        thinking = True
+        #thinking = True
         text.value = ''
         chat_messages.refresh()
 
@@ -292,7 +291,7 @@ async def main(client: Client):
             with ui.column().classes('w-full items-center'):
                 # create input fields
                 # 1. enter address
-                ADDRESS = ui.input(label = 'Enter an address or zipcode in Singapore', validation = {'Input too short': lambda value: len(value) >= 5}).props('clearable').classes('w-80')
+                ADDRESS = ui.input(label = 'Enter an address or zipcode in Singapore', validation = {'Input too short': lambda value: len(value) >= 6}).props('clearable').classes('w-80')
                 ADDRESS.on('keydown.enter', lambda LAT, LON: geocode(ADDRESS.value))
                 print(LAT, LON)
                 #LAT, LON = geocode(ADDRESS.value) # needs to happen on enter
