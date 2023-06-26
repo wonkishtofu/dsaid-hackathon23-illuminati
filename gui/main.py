@@ -47,7 +47,8 @@ from llama_index.query_engine.transform_query_engine import \
 
 # adding Xuean's node post processor
 import sys
-sys.path.insert(1, '../chatbot/')
+#sys.path.insert(1, '../chatbot/')
+sys.path.insert(0, r'.../dsaid-hackathon23-illuminati/chatbot/') #Xuean's edit - original line didn't work on my laptop
 from custom_node_processor import CustomSolarPostprocessor
 
 from dotenv import find_dotenv, load_dotenv
