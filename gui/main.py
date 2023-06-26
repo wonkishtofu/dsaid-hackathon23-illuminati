@@ -187,10 +187,10 @@ agent_chain = create_llama_chat_agent(
 inj = """
         Please respond to the statement above.
         Your name is Jamie Neo. Your pronouns are they/them.
-        You are a Government Officer working for EMA in Singapore. You will answer only with reference to official documents from EMA.
+        You are an AI Chatbot created to support the Energy Market Authority (EMA) in Singapore. You will answer only with reference to official documents from EMA.
         Refer to the context FAQs and the EMA documents in composing your answers.
         If the user is unclear, you can ask the user to clarify the question.
-        When in doubt and/or the answer is not in the EMA documents, you can say "I am sorry but do not know the answer".
+        When in doubt and/or the answer is not in the EMA documents, you can say "I am sorry but do not know the answer. Please get in touch with EMA through this webpage: https://www.ema.gov.sg/contact_us.aspx".
         Keep your answers short and as terse as possible. Be polite at all times.
     """
 
@@ -232,11 +232,11 @@ async def chat_messages(own_id: str) -> None:
 @ui.page('/')
 async def main(client: Client):
     async def send() -> None:
-        #global thinking
+        global thinking
         stamp = datetime.utcnow().strftime('%X')
         user_input = text.value
         messages.append((user_id, avatar, user_input, stamp))
-        #thinking = True
+        thinking = True
         text.value = ''
         chat_messages.refresh()
 
@@ -292,34 +292,32 @@ async def main(client: Client):
                 # create input fields
                 # 1. enter address
                 ADDRESS = ui.input(label = 'Enter an address or zipcode in Singapore', validation = {'Input too short': lambda value: len(value) >= 6}).props('clearable').classes('w-80')
-                ADDRESS.on('keydown.enter', lambda LAT, LON: geocode(ADDRESS.value))
-                print(LAT, LON)
-                #LAT, LON = geocode(ADDRESS.value) # needs to happen on enter
-                #LAT, LON = geocode(str(ADDRESS))
                 
                 # 2. enter dwelling type
-                dwelling_types = ['1-room / 2-room', '3-room', '4-room', '5-room and Executive', 'Landed Properties']
+                dwelling_types = ['1-room / 2-room', '3-room', '4-room', '5-room and Executive', 'Landed Property']
                 DWELLING = ui.select(label = 'Select dwelling type', options = dwelling_types, with_input = True).classes('w-80')
                 
-                # if DWELLING.value == 'Landed Properties': # needs to happen on enter
+                if DWELLING.value == 'Landed Property': # TODO: ASK FOR ROOF AREA UPON CHOOSING LANDED PROPERTY
                 # 3. if landed property, enter estimated roof area
-                ui.label('Estimate your roof area in m²')
-                ROOF_AREA = ui.slider(min = 10, max = 200, value = 10).classes('w-80')
-                ui.label().bind_text_from(ROOF_AREA, 'value')
+                    ui.label('Estimate your roof area in m²')
+                    ROOF_AREA = ui.slider(min = 10, max = 200, value = 10).classes('w-80')
+                    ui.label().bind_text_from(ROOF_AREA, 'value')
                 
-                # button to generate estimate (needs to trigger the usage of user inputs to compute)
+                # button to generate estimate
                 ui.button('Get Estimate!', on_click = lambda: ui.notify(f'Estimating your solar consumption and generation'))
                 
+                LAT, LON = geocode(ADDRESS.value) # TODO: RUN GEOCODE FUNCTION UPON BUTTON CLICK
                 DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) # UTC
+                cloudy, exposure_times = get_suninfo(LAT, LON, DT) # needs to happen on enter
                 
-                # exposure_times = get_suninfo(LAT, LON, DT) # needs to happen on enter
-                
-                # if DT < exposure_times['dawn'] or DT > exposure_times['dusk']:
-                #     icon = ui.image('./assets/nosun.svg').classes('w-16')
-                # elif DT <= exposure_times['sunrise'] or DT >= exposure_times['sunset']:
-                #     icon = ui.image('./assets/halfsun.svg').classes('w-16')
-                # else:
-                #     icon = ui.image('./assets/fullsun.svg').classes('w-16')
+                if DT < exposure_times['dawn'] or DT > exposure_times['dusk']:
+                    icon = ui.image('./assets/nosun.svg').classes('w-16')
+                elif DT <= exposure_times['sunrise'] or DT >= exposure_times['sunset']:
+                    icon = ui.image('./assets/halfsun.svg').classes('w-16')
+                elif cloudy == True:
+                    icon = ui.image('./assets/cloudysun.svg').classes('w-16')
+                else:
+                    icon = ui.image('./assets/fullsun.svg').classes('w-16')
                 
         # what appears in realtime tab
         # TODO: what are the needed params?
