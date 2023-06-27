@@ -16,7 +16,7 @@ from solarposition import get_optimal_angles, get_suninfo
 # SUPPLY
 ADDRESS = input("Enter an address in Singapore: ")
 
-LAT, LON = geocode(ADDRESS)
+LAT, LON, SYSTEM_MSG = geocode(ADDRESS)
 DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) # UTC
 
 exposure_times = get_suninfo(LAT, LON, DT)

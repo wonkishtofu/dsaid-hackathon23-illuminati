@@ -15,6 +15,9 @@ df = pd.read_excel("demand/SES_Public_2022_tidy.xlsx", sheet_name = "T3.5")
 def get_demand_estimate(DT, DWELLING):
     # 2021 is the latest compelete year, filter by dwelling type
     demand = df[(df.year == 2021) & (df.dwelling_type == DWELLING)]
+    annual = 12*demand[(demand.month == 'Annual') & (demand.Region == 'Overall') & (demand.Description == 'Overall')]['kwh_per_acc'].iloc[0]
+    print(demand)
+    print(annual)
     
     # get current month & year
     date = datetime.strptime(DT[:DT.find("T")], "%Y-%m-%d")
@@ -30,7 +33,6 @@ def get_demand_estimate(DT, DWELLING):
         ytd += demand[(demand.month == mm) & (demand.Region == 'Overall') & (demand.Description == 'Overall')].iloc[0]['kwh_per_acc']
         days_elapsed += calendar.monthrange(year, month)[1]
     
-    annual = 12*demand[(demand.month == 'Annual') & (demand.Region == 'Overall') & (demand.Description == 'Overall')]['kwh_per_acc'].iloc[0]
-    
     hours_elapsed = (days_elapsed-1)*24 + hours
+    
     return annual, ytd, hours_elapsed

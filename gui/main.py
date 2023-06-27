@@ -2,6 +2,8 @@ import calendar
 import os
 import time
 from datetime import datetime
+from dateutil import tz
+from dotenv import find_dotenv, load_dotenv
 from typing import List, Tuple
 from uuid import uuid4
 
@@ -14,15 +16,15 @@ from nicegui.events import MouseEventArguments
 # import functions from API folder for estimator tab
 import sys
 
-""" LOAD OPENAI_API_KET FROM ENV """
+""" LOAD API KEYS FROM ENV """
 #_ = load_dotenv(find_dotenv(filename='tab2_apikeys.txt'))
-_ = load_dotenv(find_dotenv()) 
+_ = load_dotenv(find_dotenv())
 PVWATTS_API_KEY = os.environ['PVWATTS_API_KEY']
 OPENUV_API_KEY = os.environ['OPENUV_API_KEY']
 TOMTOM_API_KEY = os.environ['TOMTOM_API_KEY']
 
-sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/')
-#sys.path.insert(0, r'../api/') 
+#sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/')
+sys.path.insert(0, r'../api/')
 from conversions import to_bearing
 from demand import get_demand_estimate
 from geocode import geocode
@@ -52,9 +54,8 @@ from llama_index.query_engine.transform_query_engine import \
     TransformQueryEngine
 
 # adding Xuean's node post processor
-import sys
-#sys.path.insert(0, '../chatbot/')
-sys.path.insert(0, r'.../dsaid-hackathon23-illuminati/chatbot/') # Xuean's edit - original line didn't work on my laptop
+sys.path.insert(0, '../chatbot/')
+#sys.path.insert(0, r'.../dsaid-hackathon23-illuminati/chatbot/') # Xuean's edit - original line didn't work on my laptop
 from custom_node_processor import CustomSolarPostprocessor
 
 from dotenv import find_dotenv, load_dotenv
@@ -124,7 +125,6 @@ graph = ComposableGraph.from_indices(
 We use Langchain to define the outer chatbot abstraction. We use LlamaIndex as a core Tool within this abstraction.
 """
 
-
 # define a decompose transform
 decompose_transform = DecomposeQueryTransform(
     llm_predictor, verbose=True
@@ -147,8 +147,6 @@ custom_query_engines[graph.root_id] = graph.root_index.as_query_engine(
 
 # construct query engine
 graph_query_engine = graph.as_query_engine(custom_query_engines=custom_query_engines)
-
-
 node_postprocessor = CustomSolarPostprocessor(service_context=service_context, top_k_recency = 1, top_k_min = 3)
 
 query_engine_node_postproc = index.as_query_engine(
@@ -213,6 +211,10 @@ def get_chatbot_respone(text_input):
 # END HOT LOADING LLM #
 #######################
 
+#######################
+# ESTIMATOR FUNCTIONS #
+#######################
+
 #############
 # START GUI #
 #############
@@ -222,10 +224,13 @@ thinking: bool = False
 
 # bot id and avatar
 bot_id = str('b15731ba-d28c-4a77-8076-b5750f5296d3')
-bot_avatar = f'https://robohash.org/{bot_id}?bgset=bg2'
+#bot_avatar = f'https://robohash.org/{bot_id}?bgset=bg2'
+bot_avatar = './assets/bot.png' # this worked before and now it doesn't?
 
 disclaimer = "Hello there! I am Jamie Neo, an AI chatbot with a sunny disposition 😎 On behalf of the Energy Market Authority (EMA), I'm here to answer your questions about solar energy in Singapore."
-stamp = datetime.utcnow().strftime('%X')
+# TODO: convert all time stamps on chat messages to SGT
+stamp = datetime.utcnow().strftime('%H:%M:%S')#.replace(tzinfo = tz.gettz('UTC'))
+#sgt_stamp = stamp.astimezone(tz.gettz('Asia/Singapore'))
 messages.append(('Bot', bot_avatar, disclaimer, stamp))
 
 # refresh function for CHATBOT
@@ -240,14 +245,11 @@ async def chat_messages(own_id: str) -> None:
         #ui.spinner(size='3rem').classes('self-center')
     await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
 
-# refresh function for ESTIMATOR
-@ui.refreshable
-
-
 @ui.page('/')
 async def main(client: Client):
     async def send() -> None:
-        stamp = datetime.utcnow().strftime('%X')
+        stamp = datetime.utcnow().strftime('%H:%M:%S')#.replace(tzinfo = tz.gettz('UTC'))
+        #sgt_stamp = stamp.astimezone(tz.gettz('Asia/Singapore'))
         user_input = text.value
         messages.append((user_id, avatar, user_input, stamp))
         chat_messages.refresh()
@@ -258,7 +260,8 @@ async def main(client: Client):
         text.label = ''
 
         response = get_chatbot_respone(user_input)
-        stamp = datetime.utcnow().strftime('%X')
+        stamp = datetime.utcnow().strftime('%H:%M:%S')#.replace(tzinfo = tz.gettz('UTC'))
+        #sgt_stamp = stamp.astimezone(tz.gettz('Asia/Singapore'))
         messages.append(('Bot', bot_avatar, response, stamp))
         thinking = False
 
@@ -273,7 +276,7 @@ async def main(client: Client):
     with ui.header().classes(replace = 'row items-center') as header:
         with ui.tabs().classes('w-full') as tabs:
             chatbot = ui.tab('CHATBOT')
-            sparkline = ui.tab('ESTIMATOR')
+            estimator = ui.tab('ESTIMATOR')
             realtime = ui.tab('REALTIME')
     
     # set tabs in a tab panel
@@ -302,83 +305,118 @@ async def main(client: Client):
                 await chat_messages(user_id)
             
         # what appears in estimator tab
-        with ui.tab_panel(sparkline):
-            with ui.column().classes('w-full items-center'):
-                
-                #function to output image and sun exposure times after 'Get estimate' is pressed
-                def obtain_energy_estimate(LAT, LON):
-                    ui.notify(f'Estimating your solar consumption and generation')
-
-                    DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) # UTC
-                    exposure_times = get_suninfo(LAT, LON, DT) 
-
-                    with ui.card().tight() as card:
-                        if pd.to_datetime(DT) < pd.to_datetime(exposure_times['dawn']) or pd.to_datetime(DT) > pd.to_datetime(exposure_times['dusk']):
-                            ui.image('C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/assets/nosun.svg').classes('w-16') #TO-DO: create relative paths
-                        elif pd.to_datetime(DT) <= pd.to_datetime(exposure_times['sunrise']) or pd.to_datetime(DT) >= pd.to_datetime(exposure_times['sunset']):
-                            ui.image('C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/assets/halfsun.svg').classes('w-16') #TO-DO: create relative paths
-                        else:
-                            ui.image('C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/assets/fullsun.svg').classes('w-16') #TO-DO: create relative paths
-                    with ui.card_section():
-                        ui.label(f"Today's Projected Solar Exposure:")
-                        ui.label(f"    {time_readable(utc_to_sgt(exposure_times['dawn']))} -- DAWN")
-                        ui.label(f"    {time_readable(utc_to_sgt(exposure_times['sunrise']))} -- SUNRISE")
-                        ui.label(f"    {time_readable(utc_to_sgt(exposure_times['solarNoon']))} -- SOLAR NOON")
-                        ui.label(f"    {time_readable(utc_to_sgt(exposure_times['sunset']))} -- SUNSET")
-                        ui.label(f"    {time_readable(utc_to_sgt(exposure_times['dusk']))} -- DUSK")
-                    #TO-DO: improve aesthetics   
-
-                # 1. enter address
-                ADDRESS = ui.input(label = 'Enter an address or postal code in Singapore', 
-                   validation = {'Input too short': lambda value: len(value) >= 5})\
-                    .on('keydown.enter', lambda: generate_latlon_input_proptype.refresh())\
-                    .props('clearable')\
-                    .classes('w-80')
-                
-                @ui.refreshable
-                def generate_latlon_input_proptype():
+        with ui.tab_panel(estimator):
+            # with ui.column().classes('w-full items-center'):
+            await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
+            with ui.stepper().props('vertical').classes('w-full') as stepper:
+                with ui.step('Generation'):
                     # 1. enter address
-                    if ADDRESS.value != "":
-                        try:
-                            lat, lon = geocode(ADDRESS.value)
-                            ui.label(f"The address you are querying is: {ADDRESS.value}.")
-                            ui.label("This address has the following coordinates:")
-                            ui.label(f"Latitude: {lat}")
-                            ui.label(f"Longitude: {lon}")
-                            #TO-DO: improve aesthetics? 
-                            # 2. enter dwelling type
-                            dwelling_types = ['1-room / 2-room', '3-room', '4-room', '5-room and Executive', 'Landed Properties']
-                            DWELLING = ui.select(label = 'Select dwelling type', 
-                                                options = dwelling_types, 
-                                                with_input = True)\
-                                        .classes('w-80')\
-                                        .on('update:model-value', lambda: input_roof_area.refresh())
-                            
-                            @ui.refreshable
-                            def input_roof_area():
-                                if DWELLING.value == "Landed Properties":
-                                    # 3. if landed property, enter estimated roof area
-                                    ui.label('Estimate your roof area in m-sq')
-                                    ROOF_AREA = ui.slider(min = 10, max = 200, value = 10).classes('w-80')
-                                    ui.label().bind_text_from(ROOF_AREA, 'value')
+                    ADDRESS = ui.input(label = 'Enter an address or postal code',
+                       validation = {'Input too short': lambda value: len(value) >= 5})\
+                        .on('keydown.enter', lambda: trigger_generation.refresh())\
+                        .props('clearable')\
+                        .classes('w-80')
+                    
+                    # generation function for ESTIMATOR, triggered upon entering an address
+                    @ui.refreshable
+                    def trigger_generation():
+                        """
+                        FUNCTION to trigger address-related api calls including:
+                        1. geocode to get LAT, LON coordinates, and SYSTEM_MSG
+                        2. get_suninfo to get exposure_times dictionary with time of dawn, sunrise, sunriseEnd, solarNoon, sunsetStart, sunset, dusk
+                        3. pick icon to display alongside current datetime (DT) based on time of day
+                        4. get_optimal_angles to get optimal azimuth and altitude angles for PVWatts query
+                        """
+                        if ADDRESS.value != "":
+                            try:
+                                # sequentially run all the functions to return outputs
+                                LAT, LON, SYSTEM_MSG = geocode(ADDRESS.value)
+                                DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) # UTC
+                                exposure_times = get_suninfo(LAT, LON, DT)
+                                azimuth, tilt = get_optimal_angles(LAT, LON, exposure_times)
+                                AC_output = get_solar_estimate(LAT, LON, azimuth, tilt)
+                                
+                                with ui.column().classes('w-100 items-left'):
+                                    ui.label(f"{SYSTEM_MSG}")
+                                    ui.label(f"The coordinates are ({LAT}, {LON})")
+                                
+                                    with ui.row():
+                                        if pd.to_datetime(DT) < pd.to_datetime(exposure_times['dawn']) or pd.to_datetime(DT) > pd.to_datetime(exposure_times['dusk']):
+                                            ui.image('./assets/nosun.svg').classes('w-8')
+                                            ui.label(f"\nCurrent time is {time_readable(utc_to_sgt(DT))}\n")
+                                            ui.image('./assets/nosun.svg').classes('w-8')
+                                        elif pd.to_datetime(DT) <= pd.to_datetime(exposure_times['sunriseEnd']) or pd.to_datetime(DT) >= pd.to_datetime(exposure_times['sunsetStart']):
+                                            ui.image('./assets/halfsun.svg').classes('w-8')
+                                            ui.label(f"\nCurrent time is {time_readable(utc_to_sgt(DT))}\n")
+                                            ui.image('./assets/halfsun.svg').classes('w-8')
+                                        else:
+                                            ui.image('./assets/fullsun.svg').classes('w-8')
+                                            ui.label(f"\nCurrent time is {time_readable(utc_to_sgt(DT))}\n")
+                                            ui.image('./assets/fullsun.svg').classes('w-8')
+                                            
+                                    ui.label("Today's Expected Solar Exposure:\n")
+                                    with ui.grid(columns = 2):
+                                        ui.label(f"{time_readable(utc_to_sgt(exposure_times['dawn']))}")
+                                        ui.label("DAWN")
+                                        ui.label(f"{time_readable(utc_to_sgt(exposure_times['sunrise']))}")
+                                        ui.label("SUNRISE")
+                                        ui.label(f"{time_readable(utc_to_sgt(exposure_times['solarNoon']))}")
+                                        ui.label("SOLAR NOON")
+                                        ui.label(f"{time_readable(utc_to_sgt(exposure_times['sunset']))}")
+                                        ui.label("SUNSET")
+                                        ui.label(f"{time_readable(utc_to_sgt(exposure_times['dusk']))}")
+                                        ui.label("DUSK")
                                     
-                                    # 4. button to generate estimate (needs to trigger the usage of user inputs to compute)
-                                    ui.button('Get Estimate!', on_click = lambda: obtain_energy_estimate(lat, lon))
-
-                                elif (DWELLING.value is None) or (DWELLING.value == ""):
-                                    pass
-                                else:
-                                    ui.label("Non-landed properties are not eligible.") #TO-DO - might want to rephrase
-                                    #TO-DO - we might want to cater to condo penthouses as well? they're allowed to discuss with their MCST
+                                    ui.label("Optimal Solar Panel Orientation:\n")
+                                    with ui.grid(columns = 2):
+                                        ui.label("Azimuth")
+                                        ui.label(f"{np.round(azimuth, 2)}° ({to_bearing(azimuth)})")
+                                        ui.label("Tilt")
+                                        ui.label(f"{np.round(tilt,2)}°")
+                                
+                            except AssertionError:
+                                ui.label("Oops! The address you have queried was not found in Singapore")
+                                ui.label("Please input a Singapore address or postal code or simply type 'SUNNY' and hit enter for an island-averaged estimate.")
+                    trigger_generation()
+                    
+                    # TODO: grey-out NEXT button unless there is a valid output for Generation step
+                    with ui.stepper_navigation():
+                        ui.button('Next', on_click = stepper.next)
+                        
+                with ui.step('Consumption'):
+                    # 2. enter dwelling type
+                    DWELLING = ui.select(label = 'Select dwelling type',
+                        options = ['1-room / 2-room', '3-room', '4-room', '5-room and Executive', 'Landed Property'],
+                        with_input = True)\
+                        .classes('w-80')\
+                        .on('update:model-value', lambda: trigger_roofarea.refresh())
+                    
+                    # refresh roof area function for ESTIMATOR triggered upon entering dwelling type
+                    @ui.refreshable
+                    def trigger_roofarea():
+                        # FUNCTION to trigger roof area user input if dwelling type is Landed Property
+                        DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+                        annual_demand, ytd_demand, hours_elapsed = get_demand_estimate(DT, DWELLING.value)
+                        ui.label(f"{annual_demand}")
+                        ui.label(f"{ytd_demand}")
+                        ui.label(f"{hours_elapsed}")
+                        
+                        num_panels = 1
+                        
+                        if DWELLING.value == "Landed Property":
+                            ui.label('Estimate your roof area in m²')
+                            with ui.row():
+                                ROOF_AREA = ui.slider(min = 10, max = 200, value = 10).classes('w-50')
+                                ui.label().bind_text_from(ROOF_AREA, 'value')
                             
-                            input_roof_area()
-
-                        except AssertionError:
-                            ui.label(f"Oops! The address you have queried was not found in Singapore. Please input a Singapore address or postal code.")
-                        #TO-DO: To also add the general islandwide case - might be easier to tweak geocode function
-                        #TO-DO: Currently when i type in nonsense, i also get the general SG latlon - might want to check validity of add/postal code
-
-                generate_latlon_input_proptype()
+                            num_panels = int(np.floor(float(ROOF_AREA.value)/1.6)) # TODO: needs to refresh
+                            ui.label(f"You can fit {num_panels} Standard 250 W (1.6 m²) Solar Panels on your roof.")
+                            
+                    trigger_roofarea()
+                    
+                    with ui.stepper_navigation():
+                        ui.button('Next', on_click = stepper.next)
+                        ui.button('Back', on_click = stepper.previous).props('flat')
                 
         # what appears in realtime tab
         # TODO: what are the needed params?

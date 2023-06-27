@@ -16,38 +16,48 @@ from conversions import *  # import FUNCTION to convert angle to N/S/E/W bearing
 _ = load_dotenv(find_dotenv())
 OPENUV_API_KEY = os.environ['OPENUV_API_KEY']
 
-# query solar position on notable dates: perihelion, 2 x solstice, 2 x equinox
-notable_dates = ['2023-01-03', '2023-03-21', '2023-06-21', '2023-09-22', '2023-12-22']
-
-def get_weather(current_uv, current_time):
-    hh = float(current_time[:current_time.find(" ")][:2])
-    mm = float(current_time[:current_time.find(" ")][3:])
-    x = hh + mm/60
-    uv_normal = -0.376*x*x+9.88*x-50.89 # UV as a function of time, x
-    
-    if current_uv < 0.85*uv_normal: # if < 85% of normal, assume cloudy
-        return "cloudy"
-    else:
-        return "normal"
-
 """
 2. SUN POSITION API (OPENUV):
 Get position of the sun at notable dates and times in the year to compute optimal tilt of solar panel for energy generation
 """
 
+# query solar position on notable dates: perihelion, 2 x solstice, 2 x equinox
+notable_dates = ['2023-01-03']
+#'2023-03-21', '2023-06-21', '2023-09-22', '2023-12-22']
+
 def utc_to_sgt(utc):
+    """
+    FUNCTION to convert UTC time to SGT
+    input: UTC in the format %Y-%m-%dT%H:%M:%SZ
+    output: SGT in the format %Y-%m-%d %H:%M:%S
+    """
     from_zone = tz.tzutc()
     to_zone = tz.gettz('Asia/Singapore')
-    utc = utc[:-5].replace("T", " ")
+    if len(utc) == 20:
+        utc = utc[:-1].replace("T", " ")
+    else:
+        utc = utc[:-5].replace("T", " ")
     utc = datetime.strptime(utc, '%Y-%m-%d %H:%M:%S')
     utc = utc.replace(tzinfo = from_zone)
     return utc.astimezone(to_zone)
-    
+   
+   
 def time_readable(sgt):
+    """
+    FUNCTION to strip useful part of SGT to display
+    input: SGT in the format %Y-%m-%d %H:%M:%S
+    output: SGT in the format %H:%M
+    """
     HHMM = datetime.strftime(sgt, '%H:%M')
     return HHMM + " SGT"
 
+
 def get_suninfo(LAT, LON, DT):
+    """
+    FUNTION to output dictionary of solar position and time
+    solar positions include dawn, sunrise, sunriseEnd, solarNoon, sunsetStart, sunset, dusk
+    also chooses appropriate icon to display based on current time
+    """
     url = f"https://api.openuv.io/api/v1/uv?lat={LAT}&lng={LON}&alt=15&dt={DT}"
     headers = {'x-access-token': OPENUV_API_KEY}
     response = requests.get(url, headers = headers).json()
@@ -66,8 +76,6 @@ def get_suninfo(LAT, LON, DT):
         image = "nosun.svg"
     elif current_time <= exposure_times['sunriseEnd'] or current_time >= exposure_times['sunsetStart']:
         image = "halfsun.svg"
-    elif get_weather(current_uv, time_readable(utc_to_sgt(current_time))) == "cloudy":
-        image = "cloudysun.svg"
     else:
         image = "fullsun.svg"
 
@@ -86,7 +94,11 @@ Computing optimal tilt of solar panel ..."
 )
     return exposure_times
     
+    
 def get_optimal_angles(LAT, LON, exposure_times):
+    """
+    FUNCTION to compute optimal azimuth angle and altitude angle (tilt) of solar panel
+    """
     # get key solar position on notable dates and high demand times (-1.5 to +5 hours from solar noon)
     azimuth_angles = []
     altitude_angles = []

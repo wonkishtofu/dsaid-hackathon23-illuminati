@@ -37,6 +37,8 @@ def get_solar_estimate(LAT, LON, azimuth, tilt):
 
     response = requests.get(url, params = parameters).json()
     
-    print(f"Estimates are based on real weather observed at Station No. {response['station_info']['location']}, located {response['station_info']['distance']} m away from queried address.")
+    SYSTEM_MSG = f"Estimates are based on real weather observed at Station No. {response['station_info']['location']}, located {response['station_info']['distance']} m away from queried address."
+    
+    print(SYSTEM_MSG)
     
     return response['outputs']['ac']
