@@ -15,7 +15,8 @@ from nicegui.events import MouseEventArguments
 import sys
 
 """ LOAD OPENAI_API_KET FROM ENV """
-_ = load_dotenv(find_dotenv(filename='tab2_apikeys.txt')) 
+#_ = load_dotenv(find_dotenv(filename='tab2_apikeys.txt'))
+_ = load_dotenv(find_dotenv()) 
 PVWATTS_API_KEY = os.environ['PVWATTS_API_KEY']
 OPENUV_API_KEY = os.environ['OPENUV_API_KEY']
 TOMTOM_API_KEY = os.environ['TOMTOM_API_KEY']
