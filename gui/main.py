@@ -6,18 +6,27 @@ from typing import List, Tuple
 from uuid import uuid4
 
 import numpy as np
+import pandas as pd
 from matplotlib import pyplot as plt
 from nicegui import Tailwind, Client, app, ui
 from nicegui.events import MouseEventArguments
 
 # import functions from API folder for estimator tab
 import sys
-sys.path.insert(0, r'../api/')
+
+""" LOAD OPENAI_API_KET FROM ENV """
+_ = load_dotenv(find_dotenv(filename='tab2_apikeys.txt')) 
+PVWATTS_API_KEY = os.environ['PVWATTS_API_KEY']
+OPENUV_API_KEY = os.environ['OPENUV_API_KEY']
+TOMTOM_API_KEY = os.environ['TOMTOM_API_KEY']
+
+sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/')
+#sys.path.insert(0, r'../api/') 
 from conversions import to_bearing
 from demand import get_demand_estimate
 from geocode import geocode
 from pvwatts import get_solar_estimate
-from solarposition import get_optimal_angles, get_suninfo
+from solarposition import get_optimal_angles, get_suninfo, utc_to_sgt, time_readable
 
 # TODO: modularize hot loading LLM to make this script more readable and lightweight
 #########################
@@ -43,8 +52,8 @@ from llama_index.query_engine.transform_query_engine import \
 
 # adding Xuean's node post processor
 import sys
-sys.path.insert(0, '../chatbot/')
-#sys.path.insert(0, r'.../dsaid-hackathon23-illuminati/chatbot/') # Xuean's edit - original line didn't work on my laptop
+#sys.path.insert(0, '../chatbot/')
+sys.path.insert(0, r'.../dsaid-hackathon23-illuminati/chatbot/') # Xuean's edit - original line didn't work on my laptop
 from custom_node_processor import CustomSolarPostprocessor
 
 from dotenv import find_dotenv, load_dotenv
@@ -294,27 +303,81 @@ async def main(client: Client):
         # what appears in estimator tab
         with ui.tab_panel(sparkline):
             with ui.column().classes('w-full items-center'):
-                # create input fields
+                
+                #function to output image and sun exposure times after 'Get estimate' is pressed
+                def obtain_energy_estimate(LAT, LON):
+                    ui.notify(f'Estimating your solar consumption and generation')
+
+                    DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) # UTC
+                    exposure_times = get_suninfo(LAT, LON, DT) 
+
+                    with ui.card().tight() as card:
+                        if pd.to_datetime(DT) < pd.to_datetime(exposure_times['dawn']) or pd.to_datetime(DT) > pd.to_datetime(exposure_times['dusk']):
+                            ui.image('C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/assets/nosun.svg').classes('w-16') #TO-DO: create relative paths
+                        elif pd.to_datetime(DT) <= pd.to_datetime(exposure_times['sunrise']) or pd.to_datetime(DT) >= pd.to_datetime(exposure_times['sunset']):
+                            ui.image('C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/assets/halfsun.svg').classes('w-16') #TO-DO: create relative paths
+                        else:
+                            ui.image('C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/assets/fullsun.svg').classes('w-16') #TO-DO: create relative paths
+                    with ui.card_section():
+                        ui.label(f"Today's Projected Solar Exposure:")
+                        ui.label(f"    {time_readable(utc_to_sgt(exposure_times['dawn']))} -- DAWN")
+                        ui.label(f"    {time_readable(utc_to_sgt(exposure_times['sunrise']))} -- SUNRISE")
+                        ui.label(f"    {time_readable(utc_to_sgt(exposure_times['solarNoon']))} -- SOLAR NOON")
+                        ui.label(f"    {time_readable(utc_to_sgt(exposure_times['sunset']))} -- SUNSET")
+                        ui.label(f"    {time_readable(utc_to_sgt(exposure_times['dusk']))} -- DUSK")
+                    #TO-DO: improve aesthetics   
+
                 # 1. enter address
-                ADDRESS = ui.input(label = 'Enter an address or zipcode in Singapore', validation = {'Input too short': lambda value: len(value) >= 6}).props('clearable').classes('w-80')
+                ADDRESS = ui.input(label = 'Enter an address or postal code in Singapore', 
+                   validation = {'Input too short': lambda value: len(value) >= 5})\
+                    .on('keydown.enter', lambda: generate_latlon_input_proptype.refresh())\
+                    .props('clearable')\
+                    .classes('w-80')
                 
-                # 2. enter dwelling type
-                dwelling_types = ['1-room / 2-room', '3-room', '4-room', '5-room and Executive', 'Landed Property']
-                DWELLING = ui.select(label = 'Select dwelling type', options = dwelling_types, with_input = True).classes('w-80')
-                
-                # TODO: ASK FOR ROOF AREA UPON CHOOSING LANDED PROPERTY
-                if DWELLING.value == 'Landed Property':
-                # 3. if landed property, enter estimated roof area
-                    ui.label('Estimate your roof area in m²')
-                    ROOF_AREA = ui.slider(min = 10, max = 200, value = 10).classes('w-80')
-                    ui.label().bind_text_from(ROOF_AREA, 'value')
-                
-                # button to generate estimate
-                ui.button('Get Estimate!', on_click = lambda: ui.notify(f'Estimating your solar consumption and generation'))
-                
-                LAT, LON = geocode(ADDRESS.value) # TODO: RUN GEOCODE FUNCTION UPON BUTTON CLICK
-                DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) # UTC
-                exposure_times = get_suninfo(LAT, LON, DT) # needs to happen on enter
+                @ui.refreshable
+                def generate_latlon_input_proptype():
+                    # 1. enter address
+                    if ADDRESS.value != "":
+                        try:
+                            lat, lon = geocode(ADDRESS.value)
+                            ui.label(f"The address you are querying is: {ADDRESS.value}.")
+                            ui.label("This address has the following coordinates:")
+                            ui.label(f"Latitude: {lat}")
+                            ui.label(f"Longitude: {lon}")
+                            #TO-DO: improve aesthetics? 
+                            # 2. enter dwelling type
+                            dwelling_types = ['1-room / 2-room', '3-room', '4-room', '5-room and Executive', 'Landed Properties']
+                            DWELLING = ui.select(label = 'Select dwelling type', 
+                                                options = dwelling_types, 
+                                                with_input = True)\
+                                        .classes('w-80')\
+                                        .on('update:model-value', lambda: input_roof_area.refresh())
+                            
+                            @ui.refreshable
+                            def input_roof_area():
+                                if DWELLING.value == "Landed Properties":
+                                    # 3. if landed property, enter estimated roof area
+                                    ui.label('Estimate your roof area in m-sq')
+                                    ROOF_AREA = ui.slider(min = 10, max = 200, value = 10).classes('w-80')
+                                    ui.label().bind_text_from(ROOF_AREA, 'value')
+                                    
+                                    # 4. button to generate estimate (needs to trigger the usage of user inputs to compute)
+                                    ui.button('Get Estimate!', on_click = lambda: obtain_energy_estimate(lat, lon))
+
+                                elif (DWELLING.value is None) or (DWELLING.value == ""):
+                                    pass
+                                else:
+                                    ui.label("Non-landed properties are not eligible.") #TO-DO - might want to rephrase
+                                    #TO-DO - we might want to cater to condo penthouses as well? they're allowed to discuss with their MCST
+                            
+                            input_roof_area()
+
+                        except AssertionError:
+                            ui.label(f"Oops! The address you have queried was not found in Singapore. Please input a Singapore address or postal code.")
+                        #TO-DO: To also add the general islandwide case - might be easier to tweak geocode function
+                        #TO-DO: Currently when i type in nonsense, i also get the general SG latlon - might want to check validity of add/postal code
+
+                generate_latlon_input_proptype()
                 
         # what appears in realtime tab
         # TODO: what are the needed params?
