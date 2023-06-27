@@ -2,6 +2,7 @@ from nicegui import ui
 import mermaid
 
 # Graph of PV Cell Types (from handbook)
+# MEMRAID_1
 ui.mermaid('''
 graph LR;
     id1[PV CELL TYPES]-->id2[Crystalline Silicon];
@@ -16,6 +17,7 @@ graph LR;
 ''')
 
 # Graph of Licensing Guidelines (from handbook)
+# MERMAID_2
 ui.mermaid('''
 graph TD;
     id1[Proposed PV system]-->id2[Capacity less than 1 MW];
@@ -34,6 +36,7 @@ graph TD;
 ''')
 
 # Graph of Schemes Available for Consumers (from EMA website)
+# MERMAID_3
 ui.mermaid('''
 graph TD;
     id1[Contestable Consumer]-->id2[Capacity less than 1 MWac];
@@ -56,6 +59,7 @@ graph TD;
 ''')
 
 # Graph of Installation Guide (from handbook)
+# MERMAID_4
 ui.mermaid('''
 graph TD;
     id((START))-->id1[Check with URA or qualified person, QP, if PV can be installed];
