@@ -223,6 +223,7 @@ messages: List[Tuple[str, str, str, str]] = []
 thinking: bool = False
 
 # bot id and avatar
+sys.path.insert(0, '../gui/')
 bot_id = str('b15731ba-d28c-4a77-8076-b5750f5296d3')
 #bot_avatar = f'https://robohash.org/{bot_id}?bgset=bg2'
 bot_avatar = './assets/bot.png' # this worked before and now it doesn't?
@@ -307,7 +308,6 @@ async def main(client: Client):
         # what appears in estimator tab
         with ui.tab_panel(estimator):
             # with ui.column().classes('w-full items-center'):
-            await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
             with ui.stepper().props('vertical').classes('w-full') as stepper:
                 with ui.step('Generation'):
                     # 1. enter address
@@ -378,6 +378,7 @@ async def main(client: Client):
                                 ui.label("Oops! The address you have queried was not found in Singapore")
                                 ui.label("Please input a Singapore address or postal code or simply type 'SUNNY' and hit enter for an island-averaged estimate.")
                     trigger_generation()
+                    await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
                     
                     # TODO: grey-out NEXT button unless there is a valid output for Generation step
                     with ui.stepper_navigation():

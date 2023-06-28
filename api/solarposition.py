@@ -82,6 +82,7 @@ def get_suninfo(LAT, LON, DT):
     print(f"\nThe current time is: {time_readable(utc_to_sgt(current_time))} \n\
 Current Solar Bearing: {to_bearing(current_azimuth)} \n\
 Current Solar Angle: {np.round(current_altitude,2)}° \n\
+Current UV Index: {current_uv} \n\
 Icon:  {image}\n\
 \n\
 Today's Projected Solar Exposure: \n\
