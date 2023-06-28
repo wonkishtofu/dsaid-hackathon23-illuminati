@@ -309,8 +309,12 @@ async def main(client: Client):
             
         # what appears in estimator tab
         with ui.tab_panel(estimator):
+            # initiate variables 
+            global_vars = {'lat': 1, 'lon': 1, 'Azimuth': 1, 'Tilt': 1, 'Hours_elapsed': 0, 'num_panels': 1}
+
             # with ui.column().classes('w-full items-center'):
             with ui.stepper().props('vertical').classes('w-full') as stepper:
+
                 with ui.step('Generation'):
                     # 1. enter address
                     ADDRESS = ui.input(label = 'Enter an address or postal code',
@@ -338,6 +342,9 @@ async def main(client: Client):
                                 azimuth, tilt = get_optimal_angles(LAT, LON, exposure_times)
                                 AC_output = get_solar_estimate(LAT, LON, azimuth, tilt)
                                 
+                                # assign to global variables
+                                global_vars.update([('lat', LAT), ('lon', LON), ('Azimuth', azimuth), ('Tilt', tilt)]) 
+
                                 with ui.column().classes('w-100 items-left'):
                                     ui.label(f"{SYSTEM_MSG}")
                                     ui.label(f"The coordinates are ({LAT}, {LON})")
@@ -385,13 +392,9 @@ async def main(client: Client):
                             except AssertionError:
                                 ui.label("Oops! The address you have queried was not found in Singapore")
                                 ui.label("Please input a Singapore address or postal code or simply type 'SUNNY' and hit enter for an island-averaged estimate.")
-<<<<<<< HEAD
-=======
-                    trigger_generation()
-                    await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
->>>>>>> d8e9957d0ff3200c3a6619962abe0aefa615bcb6
                     
                     trigger_generation()
+                    await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
                                      
                 with ui.step('Consumption'):
                     # 2. enter dwelling type
@@ -400,27 +403,53 @@ async def main(client: Client):
                         with_input = True)\
                         .classes('w-80')\
                         .on('update:model-value', lambda: trigger_roofarea.refresh())
-                    
+                    ui.label("\n")
+
                     # refresh roof area function for ESTIMATOR triggered upon entering dwelling type
                     @ui.refreshable
                     def trigger_roofarea():
                         # FUNCTION to trigger roof area user input if dwelling type is Landed Property
                         DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-                        annual_demand, ytd_demand, hours_elapsed = get_demand_estimate(DT, DWELLING.value)
-                        ui.label(f"{annual_demand}")
-                        ui.label(f"{ytd_demand}")
-                        ui.label(f"{hours_elapsed}")
+                        try:
+                            annual_demand, ytd_demand, hours_elapsed = get_demand_estimate(DT, DWELLING.value)
+                            global_vars.update(Hours_elapsed = hours_elapsed)
+                            with ui.column().classes('w-100 items-left'):
+                                ui.row()
+                                ui.label(f"Estimated Energy Consumption of {DWELLING.value}")
+
+                                with ui.grid(columns = 2):
+                                    ui.label(f"Annual:")
+                                    ui.label(f"{annual_demand} kWh")
+
+                                    ui.label(f"Year-to-date*:")
+                                    ui.label(f"{ytd_demand} kWh")
+                                ui.label("*estimated to the hour").style("font-weight: 300")
+                                ui.label("\n")
+                        except:
+                            pass
                         
-                        num_panels = 1
                         
                         if DWELLING.value == "Landed Property":
-                            ui.label('Estimate your roof area in m²')
-                            with ui.row():
-                                ROOF_AREA = ui.slider(min = 10, max = 200, value = 10).classes('w-50')
-                                ui.label().bind_text_from(ROOF_AREA, 'value')
-                            
-                            ui.label(f"You can fit {num_panels} Standard 250 W (1.6 m²) Solar Panels on your roof.")\
-                                .bind_text_from(ROOF_AREA, 'value', backward = lambda x: f"You can fit {int(np.floor(float(ROOF_AREA.value)/1.6))} Standard 250 W (1.6 m²) Solar Panels on your roof.")
+                            ui.label('Estimate your roof area in m²').style("font-weight: 1000")
+
+                            with ui.column().classes('w-100 items-left'):
+                                ui.separator().classes('w-80')
+                                ROOF_AREA = ui.slider(min = 10, max = 200, value = 10).classes('w-80')
+                                ui.label().bind_text_from(ROOF_AREA, 'value', backward= lambda x: f"{x} m²")
+                                ui.separator().classes('w-80')
+                                ui.label("\n")
+
+                            def update_num_panels(ROOF_AREA):
+                                global_vars.update(num_panels = int(np.floor(float(ROOF_AREA)/1.6)))
+
+                                return f"You can fit {int(np.floor(float(ROOF_AREA)/1.6))} Standard 250 W (1.6 m²) Solar Panels on your roof."
+
+
+                            with ui.column().classes('w-100 items-left'):
+                                with ui.grid(columns = 1):
+                                    ui.label()\
+                                        .bind_text_from(ROOF_AREA, 'value', backward = lambda x: update_num_panels(x))\
+                                        .style("font-weight: 1000; font-size: 100%")
                         
                         with ui.stepper_navigation():
                             ui.button('Next', on_click = stepper.next)
@@ -429,10 +458,27 @@ async def main(client: Client):
                     trigger_roofarea()
 
                 with ui.step('Supply'):
-                    ui.label("You have selected:")
-                    ui.label(f"Address: ({ADDRESS.value})")
-                    #ui.label(f"Lat lon: {}, {}")
-                    ui.label(f"Dwelling type: {DWELLING.value}")
+                    ui.label().bind_text_from(global_vars, 'lat', backward=lambda x: f'{x}')
+                    ui.label().bind_text_from(global_vars, 'lon', backward=lambda x: f'{x}')
+                    ui.label().bind_text_from(global_vars, 'Azimuth', backward=lambda x: f'{x}')
+                    ui.label().bind_text_from(global_vars, 'Tilt', backward=lambda x: f'{x}')
+                    ui.label().bind_text_from(global_vars, 'num_panels', backward=lambda x: f'{x}')
+
+                    try:
+                        output_arr = get_solar_estimate(global_vars['lat'], global_vars['lon'],
+                                                        global_vars['Azimuth'], global_vars['Tilt'])
+                    except:
+                        pass
+                    
+                    with ui.column().classes('w-100 items-left'):
+                        ui.label(f"Estimated Energy Generation")
+                        with ui.grid(columns = 2):
+                            ui.label(f"Annual:")
+                            ui.label(f"{global_vars['num_panels']*sum(output_arr)/1000} kWh")
+
+                            ui.label(f"Year-to-date*:")
+                            ui.label(f"{global_vars['num_panels']*sum(output_arr[:global_vars['Hours_elapsed']])/1000} kWh")
+                            ui.label("*estimated to the hour").style("font-weight: 300")
 
                     with ui.stepper_navigation():
                             ui.button('Back', on_click = stepper.previous).props('flat')
