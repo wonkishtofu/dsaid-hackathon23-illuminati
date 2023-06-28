@@ -55,6 +55,7 @@ from llama_index.query_engine.transform_query_engine import \
 
 # adding Xuean's node post processor
 sys.path.insert(0, '../chatbot/')
+sys.path.insert(1,'../gui/assets/')
 #sys.path.insert(0, r'.../dsaid-hackathon23-illuminati/chatbot/') # Xuean's edit - original line didn't work on my laptop
 from custom_node_processor import CustomSolarPostprocessor
 
@@ -185,7 +186,7 @@ for y in range(1, 9):
     tool_config = IndexToolConfig(
         query_engine=query_engine,
         name=f"Vector Index {y}",
-        description=f"Necessary for when you want to answer queries about solar energy, EMA's energy policy, and other energy policy related matters {y} ",
+        description=f"Necessary for when you want to answer queries about solar energy, EMA's energy policy, and other energy policy related matters. This is document index: {y} ",
         tool_kwargs={"return_direct": True, "return_sources": True},
     )
     index_configs.append(tool_config)
@@ -226,8 +227,9 @@ inj = """
         Keep your answers short and terse. Be polite at all times.
     """
 
+
 def get_chatbot_respone(text_input):
-    return agent_chain.run(input = text_input + inj)
+    return agent_chain.run(input = text_input)
 
 
 #######################
@@ -248,7 +250,7 @@ thinking: bool = False
 # bot id and avatar
 bot_id = str('b15731ba-d28c-4a77-8076-b5750f5296d3')
 #bot_avatar = f'https://robohash.org/{bot_id}?bgset=bg2'
-bot_avatar = './assets/bot.png' # this worked before and now it doesn't?
+bot_avatar = 'https://raw.githubusercontent.com/wonkishtofu/dsaid-hackathon23-illuminati/main/gui/assets/bot.png' # this worked before and now it doesn't?
 
 disclaimer = "Hello there! I am Jamie Neo, an AI chatbot with a sunny disposition 😎 On behalf of the Energy Market Authority (EMA), I'm here to answer your questions about solar energy in Singapore."
 # TODO: convert all time stamps on chat messages to SGT
@@ -287,6 +289,7 @@ async def main(client: Client):
         #sgt_stamp = stamp.astimezone(tz.gettz('Asia/Singapore'))
         messages.append(('Bot', bot_avatar, response, stamp))
         thinking = False
+        text.set_value(None)
 
     def on_tab_change(event):
         print(event.value)

@@ -28,7 +28,6 @@ from llama_index.query_engine.transform_query_engine import \
 #adding Xuean's node post processor
 from custom_node_processor import CustomSolarPostprocessor
 
-os.environ["OPENAI_API_KEY"] = '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'
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
 #list ema docs
