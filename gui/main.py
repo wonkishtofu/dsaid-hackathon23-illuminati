@@ -64,7 +64,7 @@ _ = load_dotenv(find_dotenv(find_dotenv(filename='C:/Users/Zhong Xuean/Documents
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
 # list ema docs
-ema = [1,2,3,4]
+ema = [1,2,3,4,5,6,7,8,9]
 
 UnstructuredReader = download_loader("UnstructuredReader", refresh_cache=True)
 loader = UnstructuredReader()
@@ -156,7 +156,7 @@ query_engine_node_postproc = index.as_query_engine(
 
 index_configs = []
 
-for y in range(1, 4):
+for y in range(1, 9):
     query_engine_node_postproc = index.as_query_engine(
         similarity_top_k=3,
         node_postprocessors=[node_postprocessor]
@@ -172,7 +172,7 @@ for y in range(1, 4):
 graph_config = IndexToolConfig(
     query_engine=graph_query_engine,
     name=f"Graph Index",
-    description="Necessary for when you want to answer queries regarding EMAs energy policy.",
+    description="Necessary for when you need to cross-reference files from EMA's official documents.",
     tool_kwargs={"return_direct": True, "return_sources": True},
     return_sources=True
 )
@@ -193,13 +193,14 @@ agent_chain = create_llama_chat_agent(
 )
 
 inj = """
+        
         Please respond to the statement above.
         Your name is Jamie Neo. Your pronouns are they/them.
         You are an AI chatbot created to support EMA by answering questions about solar energy in Singapore.
         You will answer only with reference to official documents from EMA.
         Refer to the context FAQs and the EMA documents in composing your answers. Define terms if needed.
         If the user is unclear, you can ask the user to clarify the question.
-        When in doubt and/or the answer is not in the EMA documents, you can say "I am sorry but do not know the answer. Please get in touch with EMA through this webpage: https://www.ema.gov.sg/contact_us.aspx"
+        When in doubt and/or the answer is not in the EMA documents, you can say "I am sorry but do not know the answer. Please get in touch with EMA through this webpage: https://www.ema.gov.sg/"
         Keep your answers short and terse. Be polite at all times.
     """
 
@@ -224,6 +225,7 @@ messages: List[Tuple[str, str, str, str]] = []
 thinking: bool = False
 
 # bot id and avatar
+sys.path.insert(0, '../gui/')
 bot_id = str('b15731ba-d28c-4a77-8076-b5750f5296d3')
 #bot_avatar = f'https://robohash.org/{bot_id}?bgset=bg2'
 bot_avatar = './assets/bot.png' # this worked before and now it doesn't?
@@ -243,7 +245,7 @@ async def chat_messages(own_id: str) -> None:
         # TODO: SHOW UI.SPINNER BEFORE RESPONSE GENERATION
         ui.spinner(size = 'lg', color = 'yellow')
         ui.classes('self-center')
-        #ui.spinner(size='3rem').classes('self-center')
+        # ui.spinner(size='3rem').classes('self-center')
     await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
 
 @ui.page('/')
@@ -308,7 +310,6 @@ async def main(client: Client):
         # what appears in estimator tab
         with ui.tab_panel(estimator):
             # with ui.column().classes('w-full items-center'):
-            await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
             with ui.stepper().props('vertical').classes('w-full') as stepper:
                 with ui.step('Generation'):
                     # 1. enter address
@@ -384,6 +385,11 @@ async def main(client: Client):
                             except AssertionError:
                                 ui.label("Oops! The address you have queried was not found in Singapore")
                                 ui.label("Please input a Singapore address or postal code or simply type 'SUNNY' and hit enter for an island-averaged estimate.")
+<<<<<<< HEAD
+=======
+                    trigger_generation()
+                    await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
+>>>>>>> d8e9957d0ff3200c3a6619962abe0aefa615bcb6
                     
                     trigger_generation()
                                      
