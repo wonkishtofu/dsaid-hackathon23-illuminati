@@ -17,14 +17,14 @@ from nicegui.events import MouseEventArguments
 import sys
 
 """ LOAD API KEYS FROM ENV """
-#_ = load_dotenv(find_dotenv(filename='tab2_apikeys.txt'))
-_ = load_dotenv(find_dotenv())
+_ = load_dotenv(find_dotenv(filename='tab2_apikeys.txt'))
+#_ = load_dotenv(find_dotenv())
 PVWATTS_API_KEY = os.environ['PVWATTS_API_KEY']
 OPENUV_API_KEY = os.environ['OPENUV_API_KEY']
 TOMTOM_API_KEY = os.environ['TOMTOM_API_KEY']
 
-#sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/')
-sys.path.insert(0, r'../api/')
+sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/')
+#sys.path.insert(0, r'../api/')
 from conversions import to_bearing
 from demand import get_demand_estimate
 from geocode import geocode
@@ -54,13 +54,13 @@ from llama_index.query_engine.transform_query_engine import \
     TransformQueryEngine
 
 # adding Xuean's node post processor
-sys.path.insert(0, '../chatbot/')
-#sys.path.insert(0, r'.../dsaid-hackathon23-illuminati/chatbot/') # Xuean's edit - original line didn't work on my laptop
+#sys.path.insert(0, '../chatbot/')
+sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/') # Xuean's edit - original line didn't work on my laptop
 from custom_node_processor import CustomSolarPostprocessor
 
 from dotenv import find_dotenv, load_dotenv
 
-_ = load_dotenv(find_dotenv())
+_ = load_dotenv(find_dotenv(find_dotenv(filename='C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/apikey.txt')))
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
 # list ema docs
@@ -72,7 +72,7 @@ doc_set = {}
 all_docs = []
 
 for ema_num in ema:
-    ema_docs = loader.load_data(file=Path(f'../chatbot/data/EMA/EMA_{ema_num}.csv'), split_documents=False)
+    ema_docs = loader.load_data(file=Path(f'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/data/EMA/EMA_{ema_num}.csv'), split_documents=False)
     # insert year metadata into each year
     for d in ema_docs:
         d.extra_info = {"ema_num": ema_num}
@@ -215,6 +215,7 @@ def get_chatbot_respone(text_input):
 # ESTIMATOR FUNCTIONS #
 #######################
 
+
 #############
 # START GUI #
 #############
@@ -313,9 +314,9 @@ async def main(client: Client):
                     # 1. enter address
                     ADDRESS = ui.input(label = 'Enter an address or postal code',
                        validation = {'Input too short': lambda value: len(value) >= 5})\
-                        .on('keydown.enter', lambda: trigger_generation.refresh())\
                         .props('clearable')\
-                        .classes('w-80')
+                        .classes('w-80')\
+                        .on('keydown.enter', lambda: trigger_generation.refresh())
                     
                     # generation function for ESTIMATOR, triggered upon entering an address
                     @ui.refreshable
@@ -374,15 +375,18 @@ async def main(client: Client):
                                         ui.label("Tilt")
                                         ui.label(f"{np.round(tilt,2)}°")
                                 
+                                #Make next button appear
+                                with ui.stepper_navigation():
+                                    with ui.row():
+                                        #ui.button('Regenerate Results', on_click = lambda: trigger_generation.refresh())
+                                        ui.button('Next', on_click = stepper.next)
+
                             except AssertionError:
                                 ui.label("Oops! The address you have queried was not found in Singapore")
                                 ui.label("Please input a Singapore address or postal code or simply type 'SUNNY' and hit enter for an island-averaged estimate.")
-                    trigger_generation()
                     
-                    # TODO: grey-out NEXT button unless there is a valid output for Generation step
-                    with ui.stepper_navigation():
-                        ui.button('Next', on_click = stepper.next)
-                        
+                    trigger_generation()
+                                     
                 with ui.step('Consumption'):
                     # 2. enter dwelling type
                     DWELLING = ui.select(label = 'Select dwelling type',
@@ -409,14 +413,23 @@ async def main(client: Client):
                                 ROOF_AREA = ui.slider(min = 10, max = 200, value = 10).classes('w-50')
                                 ui.label().bind_text_from(ROOF_AREA, 'value')
                             
-                            num_panels = int(np.floor(float(ROOF_AREA.value)/1.6)) # TODO: needs to refresh
-                            ui.label(f"You can fit {num_panels} Standard 250 W (1.6 m²) Solar Panels on your roof.")
+                            ui.label(f"You can fit {num_panels} Standard 250 W (1.6 m²) Solar Panels on your roof.")\
+                                .bind_text_from(ROOF_AREA, 'value', backward = lambda x: f"You can fit {int(np.floor(float(ROOF_AREA.value)/1.6))} Standard 250 W (1.6 m²) Solar Panels on your roof.")
+                        
+                        with ui.stepper_navigation():
+                            ui.button('Next', on_click = stepper.next)
+                            ui.button('Back', on_click = stepper.previous).props('flat')
                             
                     trigger_roofarea()
-                    
+
+                with ui.step('Supply'):
+                    ui.label("You have selected:")
+                    ui.label(f"Address: ({ADDRESS.value})")
+                    #ui.label(f"Lat lon: {}, {}")
+                    ui.label(f"Dwelling type: {DWELLING.value}")
+
                     with ui.stepper_navigation():
-                        ui.button('Next', on_click = stepper.next)
-                        ui.button('Back', on_click = stepper.previous).props('flat')
+                            ui.button('Back', on_click = stepper.previous).props('flat')
                 
         # what appears in realtime tab
         # TODO: what are the needed params?
