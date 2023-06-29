@@ -329,9 +329,12 @@ async def main(client: Client):
         # what appears in estimator tab
         with ui.tab_panel(estimator):
             # initiate variables 
-            global_vars = {'lat': 1, 'lon': 1, 'Azimuth': 1, 'Tilt': 1, 'Hours_elapsed': 0, 'num_panels': 1}
+            global_vars = {'LAT': 0, 'LON': 0,
+                           'AZIMUTH': 0, 'TILT': 0,
+                           'HOURS_ELAPSED': 0, 'YTD_DEMAND': 0,
+                           'ANNUAL_DEMAND': 0, 'ANNUAL_SUPPLY': 0,
+                           'NUM_PANELS': 1}
 
-            # with ui.column().classes('w-full items-center'):
             with ui.stepper().props('vertical').classes('w-full') as stepper:
 
                 with ui.step('Generation'):
@@ -362,62 +365,69 @@ async def main(client: Client):
                                 AC_output = get_solar_estimate(LAT, LON, azimuth, tilt)
                                 
                                 # assign to global variables
-                                global_vars.update([('lat', LAT), ('lon', LON), ('Azimuth', azimuth), ('Tilt', tilt)]) 
-
+                                global_vars.update([('LAT', LAT), ('LON', LON), ('AZIMUTH', azimuth), ('TILT', tilt)])
+                                
+                                # output the system message and the coordinates
                                 with ui.column().classes('w-100 items-left'):
                                     ui.label(f"{SYSTEM_MSG}")
                                     ui.label(f"The coordinates are ({LAT}, {LON})")
-                                
+                                    
+                                    # output sun icon and current time
                                     with ui.row():
                                         if pd.to_datetime(DT) < pd.to_datetime(exposure_times['dawn']) or pd.to_datetime(DT) > pd.to_datetime(exposure_times['dusk']):
                                             ui.image('./assets/nosun.svg').classes('w-8')
-                                            ui.label(f"\nCurrent time is {time_readable(utc_to_sgt(DT))}\n")
+                                            ui.label(f"\nCurrent time is {time_readable(utc_to_sgt(DT))}\n").style("font-weight: 1000")
                                             ui.image('./assets/nosun.svg').classes('w-8')
                                         elif pd.to_datetime(DT) <= pd.to_datetime(exposure_times['sunriseEnd']) or pd.to_datetime(DT) >= pd.to_datetime(exposure_times['sunsetStart']):
                                             ui.image('./assets/halfsun.svg').classes('w-8')
-                                            ui.label(f"\nCurrent time is {time_readable(utc_to_sgt(DT))}\n")
+                                            ui.label(f"\nCurrent time is {time_readable(utc_to_sgt(DT))}\n").style("font-weight: 1000")
                                             ui.image('./assets/halfsun.svg').classes('w-8')
                                         else:
                                             ui.image('./assets/fullsun.svg').classes('w-8')
-                                            ui.label(f"\nCurrent time is {time_readable(utc_to_sgt(DT))}\n")
+                                            ui.label(f"\nCurrent time is {time_readable(utc_to_sgt(DT))}\n").style("font-weight: 1000")
                                             ui.image('./assets/fullsun.svg').classes('w-8')
                                             
-                                    ui.label("Today's Expected Solar Exposure:\n")
-                                    with ui.grid(columns = 2):
+                                    # output grid with solar exposure timeline
+                                    ui.label("Today's Expected Solar Exposure:\n").style("font-weight: 1000")
+                                    with ui.grid(columns = 3):
+                                        ui.label()
                                         ui.label(f"{time_readable(utc_to_sgt(exposure_times['dawn']))}")
                                         ui.label("DAWN")
+                                        ui.label()
                                         ui.label(f"{time_readable(utc_to_sgt(exposure_times['sunrise']))}")
                                         ui.label("SUNRISE")
+                                        ui.label()
                                         ui.label(f"{time_readable(utc_to_sgt(exposure_times['solarNoon']))}")
                                         ui.label("SOLAR NOON")
+                                        ui.label()
                                         ui.label(f"{time_readable(utc_to_sgt(exposure_times['sunset']))}")
                                         ui.label("SUNSET")
+                                        ui.label()
                                         ui.label(f"{time_readable(utc_to_sgt(exposure_times['dusk']))}")
                                         ui.label("DUSK")
                                     
-                                    ui.label("Optimal Solar Panel Orientation:\n")
-                                    with ui.grid(columns = 2):
+                                    # output grid with optimal solar panel orientation
+                                    ui.label("Optimal Solar Panel Orientation:\n").style("font-weight: 1000")
+                                    with ui.grid(columns = 3):
+                                        ui.label()
                                         ui.label("Azimuth")
                                         ui.label(f"{np.round(azimuth, 2)}° ({to_bearing(azimuth)})")
+                                        ui.label()
                                         ui.label("Tilt")
                                         ui.label(f"{np.round(tilt,2)}°")
                                 
-                                #Make next button appear
+                                # make NEXT button appear
                                 with ui.stepper_navigation():
                                     with ui.row():
-                                        #ui.button('Regenerate Results', on_click = lambda: trigger_generation.refresh())
+                                        # ui.button('Regenerate Results', on_click = lambda: trigger_generation.refresh())
                                         ui.button('Next', on_click = stepper.next)
-
+                            
                             except AssertionError:
-                                ui.label("Oops! The address you have queried was not found in Singapore")
-                                ui.label("Please input a Singapore address or postal code or simply type 'SUNNY' and hit enter for an island-averaged estimate.")
-<<<<<<< HEAD
-                    trigger_generation()
-                    await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
-=======
->>>>>>> cd4c62189e24e7905b032cc00f34451157a8f4e5
+                                with ui.column().classes('w-100 items-left'):
+                                    ui.label("Oops! The address you have queried was not found in Singapore")
+                                    ui.label("Please input a Singapore address or postal code or simply type 'SUNNY' and hit enter for an island-averaged estimate.")
                     
-                    trigger_generation()
+                    trigger_generation() # end of function
                     await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
                                      
                 with ui.step('Consumption'):
@@ -427,83 +437,88 @@ async def main(client: Client):
                         with_input = True)\
                         .classes('w-80')\
                         .on('update:model-value', lambda: trigger_roofarea.refresh())
-                    ui.label("\n")
 
                     # refresh roof area function for ESTIMATOR triggered upon entering dwelling type
                     @ui.refreshable
                     def trigger_roofarea():
-                        # FUNCTION to trigger roof area user input if dwelling type is Landed Property
                         DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
                         try:
+                            # get annual and ytd demand estimate
                             annual_demand, ytd_demand, hours_elapsed = get_demand_estimate(DT, DWELLING.value)
-                            global_vars.update(Hours_elapsed = hours_elapsed)
+                            # assign to global variables
+                            global_vars.update([('HOURS_ELAPSED', hours_elapsed), ('YTD_DEMAND', ytd_demand)], ('ANNUAL_DEMAND', annual_demand)])
+                            
+                            # output grid with annual and ytd demand
                             with ui.column().classes('w-100 items-left'):
                                 ui.row()
                                 ui.label(f"Estimated Energy Consumption of {DWELLING.value}")
-
-                                with ui.grid(columns = 2):
+                                with ui.grid(columns = 3):
+                                    ui.label()
                                     ui.label(f"Annual:")
                                     ui.label(f"{annual_demand} kWh")
-
+                                    ui.label()
                                     ui.label(f"Year-to-date*:")
                                     ui.label(f"{ytd_demand} kWh")
                                 ui.label("*estimated to the hour").style("font-weight: 300")
-                                ui.label("\n")
                         except:
                             pass
                         
-                        
+                        # if Landed Property, as for roof area input
                         if DWELLING.value == "Landed Property":
                             ui.label('Estimate your roof area in m²').style("font-weight: 1000")
-
+                            
                             with ui.column().classes('w-100 items-left'):
                                 ui.separator().classes('w-80')
                                 ROOF_AREA = ui.slider(min = 10, max = 200, value = 10).classes('w-80')
-                                ui.label().bind_text_from(ROOF_AREA, 'value', backward= lambda x: f"{x} m²")
+                                ui.label().bind_text_from(ROOF_AREA, 'value', backward = lambda x: f"{x} m²")
                                 ui.separator().classes('w-80')
-                                ui.label("\n")
-
+                            
+                            # function to dynamically update global variables
                             def update_num_panels(ROOF_AREA):
-                                global_vars.update(num_panels = int(np.floor(float(ROOF_AREA)/1.6)))
-
+                                global_vars.update(NUM_PANELS = int(np.floor(float(ROOF_AREA)/1.6)))
                                 return f"You can fit {int(np.floor(float(ROOF_AREA)/1.6))} Standard 250 W (1.6 m²) Solar Panels on your roof."
-
-
+                                
+                            # show number of solar panels
                             with ui.column().classes('w-100 items-left'):
                                 with ui.grid(columns = 1):
                                     ui.label()\
                                         .bind_text_from(ROOF_AREA, 'value', backward = lambda x: update_num_panels(x))\
                                         .style("font-weight: 1000; font-size: 100%")
                         
+                        # make NEXT button appear
+                        # make BACK button appear
                         with ui.stepper_navigation():
                             ui.button('Next', on_click = stepper.next)
                             ui.button('Back', on_click = stepper.previous).props('flat')
                             
-                    trigger_roofarea()
+                    trigger_roofarea() # end of function
+                    await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
 
                 with ui.step('Supply'):
-                    ui.label().bind_text_from(global_vars, 'lat', backward=lambda x: f'{x}')
-                    ui.label().bind_text_from(global_vars, 'lon', backward=lambda x: f'{x}')
-                    ui.label().bind_text_from(global_vars, 'Azimuth', backward=lambda x: f'{x}')
-                    ui.label().bind_text_from(global_vars, 'Tilt', backward=lambda x: f'{x}')
-                    ui.label().bind_text_from(global_vars, 'num_panels', backward=lambda x: f'{x}')
+                    ui.label().bind_text_from(global_vars, 'LAT', backward=lambda x: f'{x}')
+                    ui.label().bind_text_from(global_vars, 'LON', backward=lambda x: f'{x}')
+                    ui.label().bind_text_from(global_vars, 'AZIMUTH', backward=lambda x: f'{x}')
+                    ui.label().bind_text_from(global_vars, 'TILT', backward=lambda x: f'{x}')
+                    ui.label().bind_text_from(global_vars, 'NUM_PANELS', backward=lambda x: f'{x}')
 
                     try:
-                        output_arr = get_solar_estimate(global_vars['lat'], global_vars['lon'],
-                                                        global_vars['Azimuth'], global_vars['Tilt'])
+                        output_arr = get_solar_estimate(global_vars['LAT'], global_vars['LON'],
+                                                        global_vars['AZIMUTH'], global_vars['TILT'])
+                        ui.label(f"{len(output_arr}, {sum(output_arr}")
                     except:
                         pass
                     
                     with ui.column().classes('w-100 items-left'):
-                        ui.label(f"Estimated Energy Generation")
-                        with ui.grid(columns = 2):
+                        ui.label(f"Estimated Energy Generation").style("font-weight: 1000")
+                        with ui.grid(columns = 3):
+                            ui.label()
                             ui.label(f"Annual:")
                             ui.label(f"{global_vars['num_panels']*sum(output_arr)/1000} kWh")
-
+                            ui.label()
                             ui.label(f"Year-to-date*:")
                             ui.label(f"{global_vars['num_panels']*sum(output_arr[:global_vars['Hours_elapsed']])/1000} kWh")
                             ui.label("*estimated to the hour").style("font-weight: 300")
-
+                    
                     with ui.stepper_navigation():
                             ui.button('Back', on_click = stepper.previous).props('flat')
                 
