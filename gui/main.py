@@ -16,15 +16,15 @@ from nicegui.events import MouseEventArguments
 import sys
 
 """ LOAD API KEYS FROM ENV """
-#_ = load_dotenv(find_dotenv(filename='tab2_apikeys.txt')) # XUEAN PATH
-_ = load_dotenv(find_dotenv())
+_ = load_dotenv(find_dotenv(filename='tab2_apikeys.txt')) # XUEAN PATH
+#_ = load_dotenv(find_dotenv())
 PVWATTS_API_KEY = os.environ['PVWATTS_API_KEY']
 OPENUV_API_KEY = os.environ['OPENUV_API_KEY']
 TOMTOM_API_KEY = os.environ['TOMTOM_API_KEY']
 
 """ IMPORT FUNCTIONS FOR ESTIMATOR TAB """
-#sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/') # XUEAN PATH
-sys.path.insert(0, r'../api/')
+sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/') # XUEAN PATH
+#sys.path.insert(0, r'../api/')
 from conversions import to_bearing
 from demand import get_demand_estimate
 from geocode import geocode
@@ -54,14 +54,14 @@ from llama_index.query_engine.transform_query_engine import \
     TransformQueryEngine
 
 ## ADDING XUEAN'S NODE POST PROCESSOR
-sys.path.insert(0, '../chatbot/')
-# sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/') # XUEAN PATH
+#sys.path.insert(0, '../chatbot/')
+sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/') # XUEAN PATH
 from custom_node_processor import CustomSolarPostprocessor
 
 from dotenv import find_dotenv, load_dotenv
 
-# _ = load_dotenv(find_dotenv(find_dotenv(filename='C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/apikey.txt'))) # XUEAN PATH
-_ = load_dotenv(find_dotenv())
+_ = load_dotenv(find_dotenv(find_dotenv(filename='C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/apikey.txt'))) # XUEAN PATH
+#_ = load_dotenv(find_dotenv())
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
 # list ema docs
@@ -73,8 +73,8 @@ doc_set = {}
 all_docs = []
 
 for ema_num in ema:
-    # ema_docs = loader.load_data(file=Path(f'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/data/EMA/EMA_{ema_num}.csv'), split_documents=False) # XUEAN PATH
-    ema_docs = loader.load_data(file=Path(f'../chatbot/data/EMA/EMA_{ema_num}.csv'), split_documents=False)
+    ema_docs = loader.load_data(file=Path(f'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/data/EMA/EMA_{ema_num}.csv'), split_documents=False) # XUEAN PATH
+    #ema_docs = loader.load_data(file=Path(f'../chatbot/data/EMA/EMA_{ema_num}.csv'), split_documents=False)
     # insert year metadata into each year
     for d in ema_docs:
         d.extra_info = {"ema_num": ema_num}
