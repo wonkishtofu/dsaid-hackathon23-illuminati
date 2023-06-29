@@ -6,21 +6,21 @@ dependency: requirements.txt, all scraped raw data files in ../../raw/
 outputs: raw_data_summaries_sample.csv, raw_data_qna_sample.csv
 """
 
-import csv
-import json
-import os
-import random
-import time
-
-import pandas as pd
-from dotenv import find_dotenv, load_dotenv
-from tenacity import retry  # for exponential backoff (to overcome rate limit)
-from transformers import pipeline
-
 import backoff
+import csv
+from dotenv import load_dotenv, find_dotenv
+import json
 import openai
-
-                      stop_after_attempt, wait_random_exponential)
+import os
+import pandas as pd
+import random
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_random_exponential,
+)  # for exponential backoff (to overcome rate limit)
+import time
+from transformers import pipeline
 
 
 """ LOAD OPENAI_API_KET FROM ENV """
@@ -34,9 +34,8 @@ raw_path = os.chdir('../../raw/')
 
 raw_data = {}
 for filename in os.listdir(raw_path):
-    if filename == "pdf_handbook.csv":
+    if filename == "nccs_website_transcript.csv":
         name, file_extension = os.path.splitext(filename)
-        
         # read CSV raw data files
         if '.csv' in file_extension:
             input_df = pd.read_csv(name + file_extension)
@@ -169,7 +168,7 @@ for title, content in raw_data.items():
     summarise_prompt = [{'role':'system',
          'content':f"Please refer to the content provided: \n {content.strip()} \n\n"},
         {'role':'user',
-         'content':f"Summarise the most relevant lines related to solar energy or solar panels. Make sure to retain key statistics or figures."},]
+         'content':f"Summarise the most relevant lines. Make sure to retain key statistics or figures."},]
     extracts[title] = chat(summarise_prompt)
     
 print(len(extracts))
