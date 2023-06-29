@@ -34,11 +34,13 @@ def get_solar_estimate(LAT, LON, azimuth, tilt):
         'lon': LON,
         'timeframe': 'hourly'
     }
-
+    
     response = requests.get(url, params = parameters).json()
+    
+    assert len(response['errors']) < 1, "Oops! The database could not be accessed. Please try again later."
     
     SYSTEM_MSG = f"Estimates are based on real weather observed at Station No. {response['station_info']['location']}, located {response['station_info']['distance']} m away from queried address."
     
     print(SYSTEM_MSG)
     
-    return response['outputs']['ac']
+    return response['outputs']['ac'], SYSTEM_MSG
