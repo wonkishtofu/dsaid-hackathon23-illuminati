@@ -26,7 +26,7 @@ TOMTOM_API_KEY = os.environ['TOMTOM_API_KEY']
 #sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/') # XUEAN PATH
 sys.path.insert(0, r'../api/')
 from conversions import to_bearing
-from demand import get_demand_estimate
+from demand import get_demand_estimate, get_hours_elapsed
 from geocode import geocode
 from pvwatts import get_solar_estimate
 from solarposition import get_optimal_angles, get_suninfo, utc_to_sgt, time_readable
@@ -323,9 +323,12 @@ async def main(client: Client):
             # initiate variables 
             global_vars = {'LAT': 0, 'LON': 0,
                            'AZIMUTH': 0, 'TILT': 0,
-                           'HOURS_ELAPSED': 0, 'YTD_DEMAND': 0,
-                           'ANNUAL_DEMAND': 0, 'ANNUAL_SUPPLY': 0,
-                           'NUM_PANELS': 1}
+                           'YTD_DEMAND': 1, 'ANNUAL_DEMAND': 1,
+                           'YTD_SUPPLY': 0, 'ANNUAL_SUPPLY': 0,
+                           'HOURS_ELAPSED': 0, 'NUM_PANELS': 1,
+                           'SYSTEM_MSG': ""}
+            rerun_vars = {'YTD_SUPPLY': 0, 'ANNUAL_SUPPLY': 0,
+                          'NUM_PANELS': 1} # variables that can change as you toggle back and forth
 
             with ui.stepper().props('vertical').classes('w-full') as stepper:
 
@@ -354,10 +357,19 @@ async def main(client: Client):
                                 DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) # UTC
                                 exposure_times = get_suninfo(LAT, LON, DT)
                                 azimuth, tilt = get_optimal_angles(LAT, LON, exposure_times)
-                                AC_output = get_solar_estimate(LAT, LON, azimuth, tilt)
+                                AC_output, SYSTEM_MSG2 = get_solar_estimate(LAT, LON, azimuth, tilt)
+                                hours_elapsed = get_hours_elapsed(DT)
+                                
+                                # calculate annual & year-to-date generation estimate
+                                annual_supply = sum(AC_output)/1000
+                                ytd_supply = sum(AC_output[:hours_elapsed])/1000
                                 
                                 # assign to global variables
-                                global_vars.update([('LAT', LAT), ('LON', LON), ('AZIMUTH', azimuth), ('TILT', tilt)])
+                                global_vars.update([('LAT', LAT), ('LON', LON),
+                                                    ('AZIMUTH', azimuth), ('TILT', tilt),
+                                                    ('YTD_SUPPLY', ytd_supply), ('ANNUAL_SUPPLY', annual_supply),
+                                                    ('HOURS_ELAPSED', hours_elapsed), ('SYSTEM_MSG', SYSTEM_MSG2)])
+                                rerun_vars.update([('YTD_SUPPLY', ytd_supply), ('ANNUAL_SUPPLY', annual_supply)])
                                 
                                 # output the system message and the coordinates
                                 with ui.column().classes('w-100 items-left'):
@@ -429,9 +441,9 @@ async def main(client: Client):
                         DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
                         try:
                             # get annual and ytd demand estimate
-                            annual_demand, ytd_demand, hours_elapsed = get_demand_estimate(DT, DWELLING.value)
+                            annual_demand, ytd_demand = get_demand_estimate(DT, DWELLING.value)
                             # assign to global variables
-                            global_vars.update([('HOURS_ELAPSED', hours_elapsed), ('YTD_DEMAND', ytd_demand), ('ANNUAL_DEMAND', annual_demand)])
+                            global_vars.update([('YTD_DEMAND', ytd_demand), ('ANNUAL_DEMAND', annual_demand)])
                             
                             # output grid with annual and ytd demand
                             with ui.column().classes('w-100 items-left'):
@@ -443,7 +455,6 @@ async def main(client: Client):
                                     ui.label(f"Year-to-date*:")
                                     ui.label(f"{np.round(ytd_demand,0):,} kWh")
                                 ui.label("*estimated to the current hour").style("font-weight: 300")
-                                ui.label()
                         except:
                             pass
                         
@@ -459,6 +470,10 @@ async def main(client: Client):
                             # function to dynamically update global variables
                             def update_num_panels(ROOF_AREA):
                                 global_vars.update(NUM_PANELS = int(np.floor(float(ROOF_AREA)/1.6)))
+                                x = rerun_vars['ANNUAL_SUPPLY']
+                                global_vars.update(ANNUAL_SUPPLY = x*int(np.floor(float(ROOF_AREA)/1.6)))
+                                x = rerun_vars['YTD_SUPPLY']
+                                global_vars.update(YTD_SUPPLY = x*int(np.floor(float(ROOF_AREA)/1.6)))
                                 return f"You can fit {int(np.floor(float(ROOF_AREA)/1.6))} Standard 250 W (1.6 m²) Solar Panels on your roof."
                                 
                             # show number of solar panels
@@ -466,7 +481,7 @@ async def main(client: Client):
                                 with ui.grid(columns = 1):
                                     ui.label()\
                                         .bind_text_from(ROOF_AREA, 'value', backward = lambda x: update_num_panels(x))\
-                                        .style("font-weight: 1000; font-size: 100%")
+                                        .style("font-weight: 1000")
                         
                         # make NEXT button appear
                         # make BACK button appear
@@ -479,34 +494,26 @@ async def main(client: Client):
 
                 with ui.step('Supply'):
                     with ui.column().classes('w-100 items-left'):
-                        ui.label().bind_text_from(global_vars, 'LAT', backward=lambda x: f'{x}')
-                        ui.label().bind_text_from(global_vars, 'LON', backward=lambda x: f'{x}')
-                        ui.label().bind_text_from(global_vars, 'AZIMUTH', backward=lambda x: f'{x}')
-                        ui.label().bind_text_from(global_vars, 'TILT', backward=lambda x: f'{x}')
-                        ui.label().bind_text_from(global_vars, 'NUM_PANELS', backward=lambda x: f'{x}')
+                        with ui.column().classes('w-100 items-left'):
+                            ui.label("Estimated Solar Energy Generation").style("font-weight: 1000")
+                            ui.label().bind_text_from(global_vars, 'NUM_PANELS', backward=lambda x: f"[from {x} Standard 250 W Solar Panel(s)]")
+                        with ui.grid(columns = 2):
+                            ui.label(f"Annual:")
+                            ui.label().bind_text_from(global_vars, 'ANNUAL_SUPPLY', backward=lambda x: f"{np.round(x,0):,} kWh")
+                            ui.label(f"Year-to-date*:")
+                            ui.label().bind_text_from(global_vars, 'YTD_SUPPLY', backward=lambda x: f"{np.round(x,0):,} kWh")
+                        ui.label("*estimated to the current hour").style("font-weight: 300")
                         
-                        try:
-                            output_arr, SYSTEM_MSG = get_solar_estimate(global_vars['LAT'], global_vars['LON'], global_vars['AZIMUTH'], global_vars['TILT'])
+                        with ui.column().classes('w-100 items-left'):
+                            ui.label("Proportion of Personal Consumption Satisfied:").style("font-weight: 1000")
+                            ui.label().bind_text_from(global_vars, 'ANNUAL_SUPPLY', backward=lambda x: f"{np.round(100*x/global_vars['ANNUAL_DEMAND'],1)}%")\
+                                .style("font-size: 300%")
                                 
-                            with ui.column().classes('w-100 items-left'):
-                                ui.label(f"Estimated Solar Energy Generation").style("font-weight: 1000")
-                                ui.label().bind_text_from(global_vars, 'NUM_PANELS', backward=lambda x: f"[from {x} Standard 250 W Solar Panel(s)]")
-                                with ui.grid(columns = 2):
-                                    ui.label(f"Annual:")
-                                    ui.label(f"{NUM_PANELS*sum(output_arr)/1000} kWh")
-                                    ui.label(f"Year-to-date*:")
-                                    ui.label(f"{NUM_PANELS*sum(output_arr[:HOURS_ELAPSED])/1000} kWh")
-                                    ui.label("*estimated to the current hour").style("font-weight: 300")
-                                    
                             ui.separator().classes('w-80')
-                            ui.label(f"{SYSTEM_MSG}")
+                            ui.label().bind_text_from(global_vars, 'SYSTEM_MSG', backward=lambda x: f"{x}")
                             ui.separator().classes('w-80')
                             
-                        except:
-                            ui.label("I AM HERE")
-                            pass
-                            
-                        ui.label(f"Factored into this estimate are an 85% system efficiency and a 15% solar module efficiency, which are standard assumptions made by the National Renewable Energy Laboratory. Your realized output may differ from this estimate based on real-time weather and structural considerations. Visit ema.gov.sg/Guide_to_Solar_PV.aspx for more information.").style("font-weight: 300")
+                            ui.label(f"Factored into this estimate are an 85% system efficiency and a 15% solar module efficiency, which are standard assumptions made by the National Renewable Energy Laboratory. Your realized output may differ from this estimate based on real-time weather and structural considerations. Visit ema.gov.sg/Guide_to_Solar_PV.aspx for more information.").style("font-weight: 300")
                     
                     # make BACK button appear
                     with ui.stepper_navigation():
