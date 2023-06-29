@@ -11,17 +11,3 @@ Contains the following scraped and processed data sets that form Jamie Neo's kno
 7. GPT-generated Q&A from solar handbook (Title -- Questions -- Answers)
 8. GPT-generated summaries of solar handbook (Title -- Summary)
 9. Full content from solar handbook (Chapter -- Subheader1 -- Subheader2 -- Text)
-
-
-EMA Website Summary
-EMA Website Q&A
-1. GPT-generated Q&A from scraped videos & EMA webpages (Title -- Questions -- Answers)
-
-Q&A from Solar handbook
-7. GPT-generated Q&A from solar handbook (Title -- Questions -- Answers)
-
-Q&A handbook summary
-8. GPT-generated summaries of solar handbook (Title -- Summary)
-
-MTI Speech summary
-2. GPT-generated Q&A from minister speeches (Title -- Questions -- Answers)
