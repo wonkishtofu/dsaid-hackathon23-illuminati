@@ -55,6 +55,7 @@ from llama_index.query_engine.transform_query_engine import \
 
 # adding Xuean's node post processor
 sys.path.insert(0, '../chatbot/')
+sys.path.insert(1,'../gui/assets/')
 #sys.path.insert(0, r'.../dsaid-hackathon23-illuminati/chatbot/') # Xuean's edit - original line didn't work on my laptop
 from custom_node_processor import CustomSolarPostprocessor
 
@@ -107,6 +108,27 @@ on top of the 4 vector indices.
 
 index_summaries = [f"These are the official documents from EMA. This is document index {ema_num}." for ema_num in ema]
 
+index_summary_new = []
+
+index_summary_new.append('These are official documents Q&A documents from EMA. Structured as a CSV with the following columns: (Title -- Questions -- Answers) This is document index 1.')
+
+index_summary_new.append('These are official documents Q&A documents from EMA. Structured as a CSV with the following columns: (Title -- Questions -- Answers) This is document index 2.')
+
+index_summary_new.append('This official document from EMA contains all minister speeches on Singapore\s energy policy. Structured as a CSV with the following columns: (Title -- Date -- Content) This is document index 3.')
+
+index_summary_new.append('This official document from EMA summaries of videos in document index 3. Structured as a CSV with the following columns: (Title -- Summary) This is document index 4.')
+
+index_summary_new.append('This official document from EMA contains the official video transcript of policy explainers from EMA. Structured as a CSV with the following columns: (URL Source -- Title -- Content) This is document index 5.')
+
+index_summary_new.append('This official document from EMA contains the contents of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (URL Source -- Title -- Content) This is document index 6.')
+
+index_summary_new.append('This official document from EMA contains the Question and Answer component of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (URL Source -- Title -- Content) This is document index 7.')
+
+index_summary_new.append('This official document from EMA contains the summaries of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (Title -- Summary) This is document index 8.')
+
+index_summary_new.append('This official document from EMA contains the raw content of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (Chapter -- Subheader1 -- Subheader2 -- Text) This is document index 9.')
+
+
 # set number of output tokens
 llm_predictor = LLMPredictor(llm=OpenAI(temperature=0, max_tokens=512))
 service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor)
@@ -116,7 +138,7 @@ service_context = ServiceContext.from_defaults(llm_predictor=llm_predictor)
 graph = ComposableGraph.from_indices(
     ListIndex,
     [index_set[ema_num] for ema_num in ema],
-    index_summaries=index_summaries,
+    index_summaries=index_summary_new,
     service_context=service_context
 )
 
@@ -164,7 +186,7 @@ for y in range(1, 9):
     tool_config = IndexToolConfig(
         query_engine=query_engine,
         name=f"Vector Index {y}",
-        description=f"Necessary for when you want to answer queries about solar energy, EMA's energy policy, and other energy policy related matters {y} ",
+        description=f"Necessary for when you want to answer queries about solar energy, EMA's energy policy, and other energy policy related matters. This is document index: {y} ",
         tool_kwargs={"return_direct": True, "return_sources": True},
     )
     index_configs.append(tool_config)
@@ -172,7 +194,7 @@ for y in range(1, 9):
 graph_config = IndexToolConfig(
     query_engine=graph_query_engine,
     name=f"Graph Index",
-    description="Necessary for when you need to cross-reference files from EMA's official documents.",
+    description="Necessary for when you want to answer queries regarding EMAs energy policy.",
     tool_kwargs={"return_direct": True, "return_sources": True},
     return_sources=True
 )
@@ -199,13 +221,15 @@ inj = """
         You are an AI chatbot created to support EMA by answering questions about solar energy in Singapore.
         You will answer only with reference to official documents from EMA.
         Refer to the context FAQs and the EMA documents in composing your answers. Define terms if needed.
+        If the user asks for a specific document, you can provide the URL link to the document.
         If the user is unclear, you can ask the user to clarify the question.
-        When in doubt and/or the answer is not in the EMA documents, you can say "I am sorry but do not know the answer. Please get in touch with EMA through this webpage: https://www.ema.gov.sg/"
+        When in doubt and/or the answer is not in the EMA documents, you can say "I am sorry but do not know the answer."
         Keep your answers short and terse. Be polite at all times.
     """
 
+
 def get_chatbot_respone(text_input):
-    return agent_chain.run(input = text_input + inj)
+    return agent_chain.run(input = text_input)
 
 
 #######################
@@ -224,10 +248,9 @@ messages: List[Tuple[str, str, str, str]] = []
 thinking: bool = False
 
 # bot id and avatar
-sys.path.insert(0, '../gui/')
 bot_id = str('b15731ba-d28c-4a77-8076-b5750f5296d3')
 #bot_avatar = f'https://robohash.org/{bot_id}?bgset=bg2'
-bot_avatar = './assets/bot.png' # this worked before and now it doesn't?
+bot_avatar = 'https://raw.githubusercontent.com/wonkishtofu/dsaid-hackathon23-illuminati/main/gui/assets/bot.png' # this worked before and now it doesn't?
 
 disclaimer = "Hello there! I am Jamie Neo, an AI chatbot with a sunny disposition 😎 On behalf of the Energy Market Authority (EMA), I'm here to answer your questions about solar energy in Singapore."
 # TODO: convert all time stamps on chat messages to SGT
@@ -244,7 +267,7 @@ async def chat_messages(own_id: str) -> None:
         # TODO: SHOW UI.SPINNER BEFORE RESPONSE GENERATION
         ui.spinner(size = 'lg', color = 'yellow')
         ui.classes('self-center')
-        # ui.spinner(size='3rem').classes('self-center')
+        #ui.spinner(size='3rem').classes('self-center')
     await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
 
 @ui.page('/')
@@ -266,6 +289,7 @@ async def main(client: Client):
         #sgt_stamp = stamp.astimezone(tz.gettz('Asia/Singapore'))
         messages.append(('Bot', bot_avatar, response, stamp))
         thinking = False
+        text.set_value(None)
 
     def on_tab_change(event):
         print(event.value)
@@ -309,6 +333,7 @@ async def main(client: Client):
         # what appears in estimator tab
         with ui.tab_panel(estimator):
             # with ui.column().classes('w-full items-center'):
+            await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
             with ui.stepper().props('vertical').classes('w-full') as stepper:
                 with ui.step('Generation'):
                     # 1. enter address
@@ -379,7 +404,6 @@ async def main(client: Client):
                                 ui.label("Oops! The address you have queried was not found in Singapore")
                                 ui.label("Please input a Singapore address or postal code or simply type 'SUNNY' and hit enter for an island-averaged estimate.")
                     trigger_generation()
-                    await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
                     
                     # TODO: grey-out NEXT button unless there is a valid output for Generation step
                     with ui.stepper_navigation():
