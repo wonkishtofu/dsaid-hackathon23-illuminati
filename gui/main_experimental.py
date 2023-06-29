@@ -231,13 +231,8 @@ inj = """
 def get_chatbot_respone(text_input):
     return agent_chain.run(input = text_input)
 
-
 #######################
 # END HOT LOADING LLM #
-#######################
-
-#######################
-# ESTIMATOR FUNCTIONS #
 #######################
 
 #############
@@ -251,8 +246,8 @@ thinking: bool = False
 bot_id = str('b15731ba-d28c-4a77-8076-b5750f5296d3')
 #bot_avatar = f'https://robohash.org/{bot_id}?bgset=bg2'
 bot_avatar = 'https://raw.githubusercontent.com/wonkishtofu/dsaid-hackathon23-illuminati/main/gui/assets/bot.png' # this worked before and now it doesn't?
-
 disclaimer = "Hello there! I am Jamie Neo, an AI chatbot with a sunny disposition 😎 On behalf of the Energy Market Authority (EMA), I'm here to answer your questions about solar energy in Singapore."
+
 # TODO: convert all time stamps on chat messages to SGT
 stamp = datetime.utcnow().strftime('%H:%M:%S')#.replace(tzinfo = tz.gettz('UTC'))
 #sgt_stamp = stamp.astimezone(tz.gettz('Asia/Singapore'))

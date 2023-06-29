@@ -55,6 +55,7 @@ from llama_index.query_engine.transform_query_engine import \
 
 ## ADDING XUEAN'S NODE POST PROCESSOR
 sys.path.insert(0, '../chatbot/')
+sys.path.insert(1,'../gui/assets/')
 # sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/') # XUEAN PATH
 from custom_node_processor import CustomSolarPostprocessor
 
@@ -106,8 +107,28 @@ We want our queries to aggregate/synthesize information across *all* docs.
 To do this, we define a List index on top of the 4 vector indices.
 """
 
-
 index_summaries = [f"These are the official documents from EMA. This is document index {ema_num}." for ema_num in ema]
+
+index_summary_new = []
+
+index_summary_new.append('These are official documents Q&A documents from EMA. Structured as a CSV with the following columns: (Title -- Questions -- Answers) This is document index 1.')
+
+index_summary_new.append('These are official documents Q&A documents from EMA. Structured as a CSV with the following columns: (Title -- Questions -- Answers) This is document index 2.')
+
+index_summary_new.append('This official document from EMA contains all minister speeches on Singapore\s energy policy. Structured as a CSV with the following columns: (Title -- Date -- Content) This is document index 3.')
+
+index_summary_new.append('This official document from EMA summaries of videos in document index 3. Structured as a CSV with the following columns: (Title -- Summary) This is document index 4.')
+
+index_summary_new.append('This official document from EMA contains the official video transcript of policy explainers from EMA. Structured as a CSV with the following columns: (URL Source -- Title -- Content) This is document index 5.')
+
+index_summary_new.append('This official document from EMA contains the contents of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (URL Source -- Title -- Content) This is document index 6.')
+
+index_summary_new.append('This official document from EMA contains the Question and Answer component of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (URL Source -- Title -- Content) This is document index 7.')
+
+index_summary_new.append('This official document from EMA contains the summaries of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (Title -- Summary) This is document index 8.')
+
+index_summary_new.append('This official document from EMA contains the raw content of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (Chapter -- Subheader1 -- Subheader2 -- Text) This is document index 9.')
+
 
 # set number of output tokens
 llm_predictor = LLMPredictor(llm=OpenAI(temperature=0, max_tokens=512))
@@ -224,9 +245,10 @@ thinking: bool = False
 sys.path.insert(0, '../gui/')
 bot_id = str('b15731ba-d28c-4a77-8076-b5750f5296d3')
 #bot_avatar = f'https://robohash.org/{bot_id}?bgset=bg2'
-bot_avatar = './assets/bot.png' # this worked before and now it doesn't?
+bot_avatar = 'https://raw.githubusercontent.com/wonkishtofu/dsaid-hackathon23-illuminati/main/gui/assets/bot.png'
 
 disclaimer = "Hello there! I am Jamie Neo, an AI chatbot with a sunny disposition 😎 On behalf of the Energy Market Authority (EMA), I'm here to answer your questions about solar energy in Singapore."
+
 # TODO: convert all time stamps on chat messages to SGT
 stamp = datetime.utcnow().strftime('%H:%M:%S')#.replace(tzinfo = tz.gettz('UTC'))
 #sgt_stamp = stamp.astimezone(tz.gettz('Asia/Singapore'))
@@ -241,7 +263,7 @@ async def chat_messages(own_id: str) -> None:
         # TODO: SHOW UI.SPINNER BEFORE RESPONSE GENERATION
         ui.spinner(size = 'lg', color = 'yellow')
         ui.classes('self-center')
-        # ui.spinner(size='3rem').classes('self-center')
+        #ui.spinner(size='3rem').classes('self-center')
     await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
 
 @ui.page('/')
@@ -263,6 +285,7 @@ async def main(client: Client):
         #sgt_stamp = stamp.astimezone(tz.gettz('Asia/Singapore'))
         messages.append(('Bot', bot_avatar, response, stamp))
         thinking = False
+        text.set_value(None)
 
     def on_tab_change(event):
         print(event.value)
