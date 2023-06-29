@@ -477,24 +477,7 @@ async def main(client: Client):
                     trigger_roofarea() # end of function
                     await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
 
-<<<<<<< HEAD
-                with ui.step('Generation'):
-=======
                 with ui.step('Supply'):
-                    ui.label().bind_text_from(global_vars, 'LAT', backward=lambda x: f'{x}')
-                    ui.label().bind_text_from(global_vars, 'LON', backward=lambda x: f'{x}')
-                    ui.label().bind_text_from(global_vars, 'AZIMUTH', backward=lambda x: f'{x}')
-                    ui.label().bind_text_from(global_vars, 'TILT', backward=lambda x: f'{x}')
-                    ui.label().bind_text_from(global_vars, 'NUM_PANELS', backward=lambda x: f'{x}')
-
-                    try:
-                        output_arr = get_solar_estimate(global_vars['LAT'], global_vars['LON'],
-                                                        global_vars['AZIMUTH'], global_vars['TILT'])
-                        ui.label(f"{len(output_arr), sum(output_arr)}")
-                    except:
-                        pass
-                    
->>>>>>> 32ce47860baec4b28af647b5c23d977d93a45186
                     with ui.column().classes('w-100 items-left'):
                         ui.label().bind_text_from(global_vars, 'LAT', backward=lambda x: f'{x}')
                         ui.label().bind_text_from(global_vars, 'LON', backward=lambda x: f'{x}')
