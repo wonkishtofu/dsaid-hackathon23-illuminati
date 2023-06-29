@@ -13,6 +13,9 @@ if '/gui' in os.getcwd():
 df = pd.read_excel("demand/SES_Public_2022_tidy.xlsx", sheet_name = "T3.5")
 
 def get_demand_estimate(DT, DWELLING):
+    if DWELLING == "Landed Property":
+        DWELLING = "Landed Properties"
+    
     # 2021 is the latest compelete year, filter by dwelling type
     demand = df[(df.year == 2021) & (df.dwelling_type == DWELLING)]
     annual = 12*demand[(demand.month == 'Annual') & (demand.Region == 'Overall') & (demand.Description == 'Overall')]['kwh_per_acc'].iloc[0]

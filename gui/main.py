@@ -389,30 +389,23 @@ async def main(client: Client):
                                             
                                     # output grid with solar exposure timeline
                                     ui.label("Today's Expected Solar Exposure:\n").style("font-weight: 1000")
-                                    with ui.grid(columns = 3):
-                                        ui.label()
+                                    with ui.grid(columns = 2):
                                         ui.label(f"{time_readable(utc_to_sgt(exposure_times['dawn']))}")
                                         ui.label("DAWN")
-                                        ui.label()
                                         ui.label(f"{time_readable(utc_to_sgt(exposure_times['sunrise']))}")
                                         ui.label("SUNRISE")
-                                        ui.label()
                                         ui.label(f"{time_readable(utc_to_sgt(exposure_times['solarNoon']))}")
                                         ui.label("SOLAR NOON")
-                                        ui.label()
                                         ui.label(f"{time_readable(utc_to_sgt(exposure_times['sunset']))}")
                                         ui.label("SUNSET")
-                                        ui.label()
                                         ui.label(f"{time_readable(utc_to_sgt(exposure_times['dusk']))}")
                                         ui.label("DUSK")
                                     
                                     # output grid with optimal solar panel orientation
                                     ui.label("Optimal Solar Panel Orientation:\n").style("font-weight: 1000")
-                                    with ui.grid(columns = 3):
-                                        ui.label()
+                                    with ui.grid(columns = 2):
                                         ui.label("Azimuth")
                                         ui.label(f"{np.round(azimuth, 2)}° ({to_bearing(azimuth)})")
-                                        ui.label()
                                         ui.label("Tilt")
                                         ui.label(f"{np.round(tilt,2)}°")
                                 
@@ -446,17 +439,15 @@ async def main(client: Client):
                             # get annual and ytd demand estimate
                             annual_demand, ytd_demand, hours_elapsed = get_demand_estimate(DT, DWELLING.value)
                             # assign to global variables
-                            global_vars.update([('HOURS_ELAPSED', hours_elapsed), ('YTD_DEMAND', ytd_demand)], ('ANNUAL_DEMAND', annual_demand)])
+                            global_vars.update([('HOURS_ELAPSED', hours_elapsed), ('YTD_DEMAND', ytd_demand), ('ANNUAL_DEMAND', annual_demand)])
                             
                             # output grid with annual and ytd demand
                             with ui.column().classes('w-100 items-left'):
                                 ui.row()
                                 ui.label(f"Estimated Energy Consumption of {DWELLING.value}")
-                                with ui.grid(columns = 3):
-                                    ui.label()
+                                with ui.grid(columns = 2):
                                     ui.label(f"Annual:")
                                     ui.label(f"{annual_demand} kWh")
-                                    ui.label()
                                     ui.label(f"Year-to-date*:")
                                     ui.label(f"{ytd_demand} kWh")
                                 ui.label("*estimated to the hour").style("font-weight: 300")
@@ -494,7 +485,7 @@ async def main(client: Client):
                     trigger_roofarea() # end of function
                     await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
 
-                with ui.step('Supply'):
+                with ui.step('Summary'):
                     ui.label().bind_text_from(global_vars, 'LAT', backward=lambda x: f'{x}')
                     ui.label().bind_text_from(global_vars, 'LON', backward=lambda x: f'{x}')
                     ui.label().bind_text_from(global_vars, 'AZIMUTH', backward=lambda x: f'{x}')
@@ -504,23 +495,22 @@ async def main(client: Client):
                     try:
                         output_arr = get_solar_estimate(global_vars['LAT'], global_vars['LON'],
                                                         global_vars['AZIMUTH'], global_vars['TILT'])
-                        ui.label(f"{len(output_arr}, {sum(output_arr}")
+                        ui.label(f"{len(output_arr)}, {sum(output_arr)}")
                     except:
                         pass
                     
                     with ui.column().classes('w-100 items-left'):
                         ui.label(f"Estimated Energy Generation").style("font-weight: 1000")
-                        with ui.grid(columns = 3):
-                            ui.label()
+                        with ui.grid(columns = 2):
                             ui.label(f"Annual:")
-                            ui.label(f"{global_vars['num_panels']*sum(output_arr)/1000} kWh")
-                            ui.label()
+                            ui.label(f"{global_vars['NUM_PANELS']*sum(output_arr)/1000} kWh")
                             ui.label(f"Year-to-date*:")
-                            ui.label(f"{global_vars['num_panels']*sum(output_arr[:global_vars['Hours_elapsed']])/1000} kWh")
+                            ui.label(f"{global_vars['NUM_PANELS']*sum(output_arr[:global_vars['HOURS_ELAPSED']])/1000} kWh")
                             ui.label("*estimated to the hour").style("font-weight: 300")
                     
+                    # make BACK button appear
                     with ui.stepper_navigation():
-                            ui.button('Back', on_click = stepper.previous).props('flat')
+                        ui.button('Back', on_click = stepper.previous).props('flat')
                 
         # what appears in realtime tab
         # TODO: what are the needed params?
