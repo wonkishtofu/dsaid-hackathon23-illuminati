@@ -13,18 +13,18 @@ from matplotlib import pyplot as plt
 from nicegui import Tailwind, Client, app, ui
 from nicegui.events import MouseEventArguments
 
-# import functions from API folder for estimator tab
 import sys
 
 """ LOAD API KEYS FROM ENV """
-_ = load_dotenv(find_dotenv(filename='tab2_apikeys.txt'))
-#_ = load_dotenv(find_dotenv())
+#_ = load_dotenv(find_dotenv(filename='tab2_apikeys.txt')) # XUEAN PATH
+_ = load_dotenv(find_dotenv())
 PVWATTS_API_KEY = os.environ['PVWATTS_API_KEY']
 OPENUV_API_KEY = os.environ['OPENUV_API_KEY']
 TOMTOM_API_KEY = os.environ['TOMTOM_API_KEY']
 
-sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/')
-#sys.path.insert(0, r'../api/')
+""" IMPORT FUNCTIONS FOR ESTIMATOR TAB """
+#sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/') # XUEAN PATH
+sys.path.insert(0, r'../api/')
 from conversions import to_bearing
 from demand import get_demand_estimate
 from geocode import geocode
@@ -53,14 +53,15 @@ from llama_index.langchain_helpers.agents import (IndexToolConfig,
 from llama_index.query_engine.transform_query_engine import \
     TransformQueryEngine
 
-# adding Xuean's node post processor
-#sys.path.insert(0, '../chatbot/')
-sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/') # Xuean's edit - original line didn't work on my laptop
+## ADDING XUEAN'S NODE POST PROCESSOR
+sys.path.insert(0, '../chatbot/')
+# sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/') # XUEAN PATH
 from custom_node_processor import CustomSolarPostprocessor
 
 from dotenv import find_dotenv, load_dotenv
 
-_ = load_dotenv(find_dotenv(find_dotenv(filename='C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/apikey.txt')))
+# _ = load_dotenv(find_dotenv(find_dotenv(filename='C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/apikey.txt'))) # XUEAN PATH
+_ = load_dotenv(find_dotenv())
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
 # list ema docs
@@ -72,7 +73,8 @@ doc_set = {}
 all_docs = []
 
 for ema_num in ema:
-    ema_docs = loader.load_data(file=Path(f'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/data/EMA/EMA_{ema_num}.csv'), split_documents=False)
+    # ema_docs = loader.load_data(file=Path(f'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/data/EMA/EMA_{ema_num}.csv'), split_documents=False) # XUEAN PATH
+    ema_docs = loader.load_data(file=Path(f'../chatbot/data/EMA/EMA_{ema_num}.csv'), split_documents=False)
     # insert year metadata into each year
     for d in ema_docs:
         d.extra_info = {"ema_num": ema_num}
@@ -100,8 +102,8 @@ for ema_num in ema:
 
 """
 ### Composing a Graph to synthesize answers across all the existing EMA docs.
-We want our queries to aggregate/synthesize information across *all* docs. To do this, we define a List index
-on top of the 4 vector indices.
+We want our queries to aggregate/synthesize information across *all* docs.
+To do this, we define a List index on top of the 4 vector indices.
 """
 
 
@@ -207,15 +209,9 @@ inj = """
 def get_chatbot_respone(text_input):
     return agent_chain.run(input = text_input + inj)
 
-
 #######################
 # END HOT LOADING LLM #
 #######################
-
-#######################
-# ESTIMATOR FUNCTIONS #
-#######################
-
 
 #############
 # START GUI #
