@@ -12,6 +12,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from nicegui import Tailwind, Client, app, ui
 from nicegui.events import MouseEventArguments
+import mermaid
 
 import sys
 
@@ -292,6 +293,7 @@ async def main(client: Client):
             chatbot = ui.tab('CHATBOT')
             estimator = ui.tab('ESTIMATOR')
             realtime = ui.tab('REALTIME')
+            resources = ui.tab('RESOURCES')
     
     # set tabs in a tab panel
     with ui.tab_panels(tabs,
@@ -329,6 +331,8 @@ async def main(client: Client):
                            'SYSTEM_MSG': ""}
             rerun_vars = {'YTD_SUPPLY': 0, 'ANNUAL_SUPPLY': 0,
                           'NUM_PANELS': 1} # variables that can change as you toggle back and forth
+            
+            
 
             with ui.stepper().props('vertical').classes('w-full') as stepper:
 
@@ -340,9 +344,14 @@ async def main(client: Client):
                         .classes('w-80')\
                         .on('keydown.enter', lambda: trigger_generation.refresh())
                     
+                    #Spinner before results load
+                    # spinner = ui.spinner(size='lg')
+                    # spinner.visible = False
+                    
                     # generation function for ESTIMATOR, triggered upon entering an address
                     @ui.refreshable
-                    def trigger_generation():
+                    async def trigger_generation():
+
                         """
                         FUNCTION to trigger address-related api calls including:
                         1. geocode to get LAT, LON coordinates, and SYSTEM_MSG
@@ -350,6 +359,8 @@ async def main(client: Client):
                         3. pick icon to display alongside current datetime (DT) based on time of day
                         4. get_optimal_angles to get optimal azimuth and altitude angles for PVWatts query
                         """
+
+                        #def generate_demand():
                         if ADDRESS.value != "":
                             try:
                                 # sequentially run all the functions to return outputs
@@ -423,8 +434,13 @@ async def main(client: Client):
                                 with ui.column().classes('w-100 items-left'):
                                     ui.label("Oops! The address you have queried was not found in Singapore")
                                     ui.label("Please input a Singapore address or postal code or simply type 'SUNNY' and hit enter for an island-averaged estimate.")
-                    
-                    trigger_generation() # end of function
+                        
+                        # spinner.set_visibility(True)
+                        # await generate_demand()
+                        # spinner.set_visibility(False)
+                        # end of function
+
+                    trigger_generation() 
                     await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
                                      
                 with ui.step('Consumption'):
@@ -551,5 +567,100 @@ async def main(client: Client):
                                             events=['click'],
                                             cross=True) # show cross on hover
                 ii.tooltip('After')
+        
+        # what appears in resources tab
+        with ui.tab_panel(resources):
+            await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
+
+            with ui.expansion('PV Cell Types').classes('w-full').style('font-weight:1000'):
+                    # with ui.column().classes('w-full'):
+                    ui.mermaid('''
+                    graph LR;
+                        id1[PV CELL TYPES]-->id2[Crystalline Silicon];
+                        id1[PV CELL TYPES]-->id3[Thin Film];
+                        id2[Crystalline Silicon]-->Polycrystalline;
+                        id2[Crystalline Silicon]-->Monocrystalline;
+                        id3[Thin Film]-->id4[Amorphous Silicon, a-Si];
+                        id3[Thin Film]-->id5[Tandem a-Si];
+                        id3[Thin Film]-->id6[Microcrystalline];
+                        id3[Thin Film]-->CIGS;
+                        id3[Thin Film]-->CdTe;
+                    ''')
+                    
+            with ui.expansion('Licensing Guidelines').classes('w-full').style('font-weight:1000'):
+                    #with ui.column().classes('w-full'):
+                    ui.mermaid('''
+                    graph TD;
+                        id1[Proposed PV system]-->id2[Capacity less than 1 MW];
+                        id1[Proposed PV system]-->id3[Capacity 1-10 MW];
+                        id1[Proposed PV System]-->id4[Capacity greater than 10 MW];
+                        
+                        id4[Capacity greater than 10 MW]-->id5[Generation License];
+                        
+                        id3[Capacity 1-10 MW]-->id8[NOT Connected to Grid];
+                        id8[NOT Connected to Grid]-->id9[No License Required];
+                        
+                        id3[Capacity 1-10 MW]-->id6[Connected to Grid];
+                        id6[Connected to Grid]-->id7[Wholesaler Generation License];
+                        
+                        id2[Capacity less than 1 MW]-->id9[No License Required];
+                    ''')
+
+            with ui.expansion('Schemes Available for Consumers').classes('w-full').style('font-weight:1000'):
+                    #with ui.column().classes('w-full'):
+                    ui.mermaid('''
+                    graph TD;
+                        id1[Contestable Consumer]-->id2[Capacity less than 1 MWac];
+                        id1[Contestable Consumer]-->id3[Capacity 1-10 MWac];
+                        id1[Contestable Consumer]-->id4[Capacity greater than 10 MWac];
+                        
+                        id2[Capacity less than 1 MWac]-->id5[NO Payment for Excess Generation];
+                        id2[Capacity less than 1 MWac]-->id6[Payment for Excess Generation];
+                        
+                        id5[NO Payment for Excess Generation]-->id7[No Scheme Needed];
+                        id6[Payment for Excess Generation]-->id8[Enhanced Central Intermediary Scheme];
+                        
+                        id3[Capacity 1-10 MWac]-->id8[Enhanced Central Intermediary Scheme];
+                        id3[Capacity 1-10 MWac]-->id9[Register as MP with Energy Market Company];
+                        
+                        id4[Capacity greater than 10 MWac]-->id9[Register as MP with Energy Market Company]
+                        
+                        id10[Not Contestable Consumer]-->id11[Capacity less than 1 MWac];
+                        id11[Capacity less than 1 MWac]-->id12[Simplified Credit Treatment Scheme, SCT];
+                    ''')
+
+            with ui.expansion('Installation Guide').classes('w-full').style('font-weight:1000'):
+                    #with ui.column().classes('w-full'):
+                    ui.mermaid('''
+                    graph TD;
+                        id((START))-->id1[Check with URA or qualified person, QP, if PV can be installed];
+                        id1[Check with URA or qualified person if PV can be installed]-->id2{Planning Required?};
+                        id2[Planning Required?]-->NO;
+                        id2[Planning Required?]-->YES;
+                        YES-->id3[Submit development application to URA through QP, allow 4 weeks];
+                        NO-->id4[Appoint PV System Contractor to assess building structure, condition, loading];
+                        id3[Submit development application to URA with qualified person, allow 4 weeks]-->id4[Appoint PV System Contractor to assess building structure, condition, loading];
+                        id4[Appoint PV System Contractor to assess building structure, condition, loading]-->id5{Compliant with loading requirements?};
+                        id5[Compliant with loading requirements?]-->id6[YES];
+                        id5[Compliant with loading requirements?]-->id7[NO];
+                        id6[YES]-->id8[Connecting to Grid?];
+                        id8[Connecting to Grid?]-->id9[NO];
+                        id9[NO]-->id10((END));
+                        id7[NO]-->id11[Submit building plans to BCA for structural strengthening, allow 14 days];
+                        id11[Submit building plans to BCA for structural strengthening, allow 14 days]-->id8[Connecting to Grid?];
+                        id8[Connecting to Grid?]-->id12[YES];
+                        id12[YES]-->id13[Contractor appoints Licensed Electrical Worker to install and connect PV system to grid];
+                        id13[Contractor appoints Licensed Electrical Worker, LEW, to install and connect PV system to grid]-->id14[LEW submits application form to SP Services];
+                        id14[LEW submits application form to SP Services]-->id15[SP PowerGrid evaluates technical specifications];
+                        id15[SP PowerGrid evaluates technical specifications]-->id16[Comply with technical requirements?];
+                        id16[Comply with technical requirements?]-->id17[NO];
+                        id17[NO]-->id15[SP PowerGrid evaluates technical specifications];
+                        id16[Compliant with technical requirements?]-->id18[YES];
+                        id18[YES]-->id19[SP PowerGrid to advise connection scheme];
+                        id19[SP PowerGrid to advise connection scheme]-->id20[LEW install, test, commission PV system and connection];
+                        id20[LEW install, test, commission PV system and connection]-->id21[inform SP Services and PowerGrid when completed];
+                        id21[inform SP Services and PowerGrid when completed]-->id22[Contractor O&M manual to homeowner with 12 month warranty];
+                        id22[Contractor O&M manual to homeowner with 12 month warranty]-->id23((END));
+                    ''')
 
 ui.run(title = "Jamie Neo [EMA]")
