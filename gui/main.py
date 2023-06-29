@@ -249,30 +249,24 @@ bot_avatar = 'https://raw.githubusercontent.com/wonkishtofu/dsaid-hackathon23-il
 
 disclaimer = "Hello there! I am Jamie Neo, an AI chatbot with a sunny disposition 😎 On behalf of the Energy Market Authority (EMA), I'm here to answer your questions about solar energy in Singapore."
 
-# TODO: convert all time stamps on chat messages to SGT
-stamp = datetime.utcnow().strftime('%H:%M:%S')#.replace(tzinfo = tz.gettz('UTC'))
-#sgt_stamp = stamp.astimezone(tz.gettz('Asia/Singapore'))
-messages.append(('Bot', bot_avatar, disclaimer, stamp))
+messages.append(('Bot', bot_avatar, disclaimer))
 
 # refresh function for CHATBOT
 @ui.refreshable
 async def chat_messages(own_id: str) -> None:
-    for user_id, avatar, text, stamp in messages:
-        ui.chat_message(text = text, stamp = stamp, avatar = avatar, sent = own_id == user_id)
+    for user_id, avatar, text in messages:
+        ui.chat_message(text = text, avatar = avatar, sent = own_id == user_id)
     if thinking:
         # TODO: SHOW UI.SPINNER BEFORE RESPONSE GENERATION
-        ui.spinner(size = 'lg', color = 'yellow')
         ui.classes('self-center')
-        #ui.spinner(size='3rem').classes('self-center')
+        ui.spinner(size='3rem').classes('self-center')
     await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
 
 @ui.page('/')
 async def main(client: Client):
     async def send() -> None:
-        stamp = datetime.utcnow().strftime('%H:%M:%S')#.replace(tzinfo = tz.gettz('UTC'))
-        #sgt_stamp = stamp.astimezone(tz.gettz('Asia/Singapore'))
         user_input = text.value
-        messages.append((user_id, avatar, user_input, stamp))
+        messages.append((user_id, avatar, user_input))
         chat_messages.refresh()
         thinking = True
         text.value = ''
@@ -281,9 +275,7 @@ async def main(client: Client):
         text.label = ''
 
         response = get_chatbot_respone(user_input)
-        stamp = datetime.utcnow().strftime('%H:%M:%S')#.replace(tzinfo = tz.gettz('UTC'))
-        #sgt_stamp = stamp.astimezone(tz.gettz('Asia/Singapore'))
-        messages.append(('Bot', bot_avatar, response, stamp))
+        messages.append(('Bot', bot_avatar, response))
         thinking = False
         text.set_value(None)
 
@@ -303,8 +295,8 @@ async def main(client: Client):
     
     # set tabs in a tab panel
     with ui.tab_panels(tabs,
-                       value=chatbot,
-                       on_change=on_tab_change).classes('w-full'):
+                       value = chatbot,
+                       on_change = on_tab_change).classes('w-full'):
         
         # what appears in chatbot tab
         with ui.tab_panel(chatbot):
@@ -337,7 +329,7 @@ async def main(client: Client):
 
             with ui.stepper().props('vertical').classes('w-full') as stepper:
 
-                with ui.step('Generation'):
+                with ui.step('Address'):
                     # 1. enter address
                     ADDRESS = ui.input(label = 'Enter an address or postal code',
                        validation = {'Input too short': lambda value: len(value) >= 5})\
@@ -444,22 +436,22 @@ async def main(client: Client):
                             # output grid with annual and ytd demand
                             with ui.column().classes('w-100 items-left'):
                                 ui.row()
-                                ui.label(f"Estimated Energy Consumption of {DWELLING.value}")
+                                ui.label(f"Average Energy Consumption of {DWELLING.value}").style("font-weight: 1000")
                                 with ui.grid(columns = 2):
                                     ui.label(f"Annual:")
-                                    ui.label(f"{annual_demand} kWh")
+                                    ui.label(f"{np.round(annual_demand,0):,} kWh")
                                     ui.label(f"Year-to-date*:")
-                                    ui.label(f"{ytd_demand} kWh")
-                                ui.label("*estimated to the hour").style("font-weight: 300")
+                                    ui.label(f"{np.round(ytd_demand,0):,} kWh")
+                                ui.label("*estimated to the current hour").style("font-weight: 300")
+                                ui.label()
                         except:
                             pass
                         
                         # if Landed Property, as for roof area input
                         if DWELLING.value == "Landed Property":
-                            ui.label('Estimate your roof area in m²').style("font-weight: 1000")
-                            
                             with ui.column().classes('w-100 items-left'):
                                 ui.separator().classes('w-80')
+                                ui.label('Estimate your roof area in m²').style("font-weight: 1000")
                                 ROOF_AREA = ui.slider(min = 10, max = 200, value = 10).classes('w-80')
                                 ui.label().bind_text_from(ROOF_AREA, 'value', backward = lambda x: f"{x} m²")
                                 ui.separator().classes('w-80')
@@ -485,28 +477,36 @@ async def main(client: Client):
                     trigger_roofarea() # end of function
                     await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
 
-                with ui.step('Summary'):
-                    ui.label().bind_text_from(global_vars, 'LAT', backward=lambda x: f'{x}')
-                    ui.label().bind_text_from(global_vars, 'LON', backward=lambda x: f'{x}')
-                    ui.label().bind_text_from(global_vars, 'AZIMUTH', backward=lambda x: f'{x}')
-                    ui.label().bind_text_from(global_vars, 'TILT', backward=lambda x: f'{x}')
-                    ui.label().bind_text_from(global_vars, 'NUM_PANELS', backward=lambda x: f'{x}')
-
-                    try:
-                        output_arr = get_solar_estimate(global_vars['LAT'], global_vars['LON'],
-                                                        global_vars['AZIMUTH'], global_vars['TILT'])
-                        ui.label(f"{len(output_arr)}, {sum(output_arr)}")
-                    except:
-                        pass
-                    
+                with ui.step('Generation'):
                     with ui.column().classes('w-100 items-left'):
-                        ui.label(f"Estimated Energy Generation").style("font-weight: 1000")
-                        with ui.grid(columns = 2):
-                            ui.label(f"Annual:")
-                            ui.label(f"{global_vars['NUM_PANELS']*sum(output_arr)/1000} kWh")
-                            ui.label(f"Year-to-date*:")
-                            ui.label(f"{global_vars['NUM_PANELS']*sum(output_arr[:global_vars['HOURS_ELAPSED']])/1000} kWh")
-                            ui.label("*estimated to the hour").style("font-weight: 300")
+                        ui.label().bind_text_from(global_vars, 'LAT', backward=lambda x: f'{x}')
+                        ui.label().bind_text_from(global_vars, 'LON', backward=lambda x: f'{x}')
+                        ui.label().bind_text_from(global_vars, 'AZIMUTH', backward=lambda x: f'{x}')
+                        ui.label().bind_text_from(global_vars, 'TILT', backward=lambda x: f'{x}')
+                        ui.label().bind_text_from(global_vars, 'NUM_PANELS', backward=lambda x: f'{x}')
+                        
+                        try:
+                            output_arr, SYSTEM_MSG = get_solar_estimate(global_vars['LAT'], global_vars['LON'], global_vars['AZIMUTH'], global_vars['TILT'])
+                                
+                            with ui.column().classes('w-100 items-left'):
+                                ui.label(f"Estimated Solar Energy Generation").style("font-weight: 1000")
+                                ui.label().bind_text_from(global_vars, 'NUM_PANELS', backward=lambda x: f"[from {x} Standard 250 W Solar Panel(s)]")
+                                with ui.grid(columns = 2):
+                                    ui.label(f"Annual:")
+                                    ui.label(f"{NUM_PANELS*sum(output_arr)/1000} kWh")
+                                    ui.label(f"Year-to-date*:")
+                                    ui.label(f"{NUM_PANELS*sum(output_arr[:HOURS_ELAPSED])/1000} kWh")
+                                    ui.label("*estimated to the current hour").style("font-weight: 300")
+                                    
+                            ui.separator().classes('w-80')
+                            ui.label(f"{SYSTEM_MSG}")
+                            ui.separator().classes('w-80')
+                            
+                        except:
+                            ui.label("I AM HERE")
+                            pass
+                            
+                        ui.label(f"Factored into this estimate are an 85% system efficiency and a 15% solar module efficiency, which are standard assumptions made by the National Renewable Energy Laboratory. Your realized output may differ from this estimate based on real-time weather and structural considerations. Visit ema.gov.sg/Guide_to_Solar_PV.aspx for more information.").style("font-weight: 300")
                     
                     # make BACK button appear
                     with ui.stepper_navigation():
