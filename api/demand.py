@@ -8,8 +8,11 @@ import numpy as np
 import pandas as pd
 
 # read demand data
-if '/gui' in os.getcwd():
-    os.chdir("../api")
+# if '/gui' in os.getcwd():
+#     os.chdir("../api")
+
+if '/api' not in os.getcwd(): #XUEAN PATH
+    os.chdir("C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api")
 df = pd.read_excel("demand/SES_Public_2022_tidy.xlsx", sheet_name = "T3.5")
 
 def get_demand_estimate(DT, DWELLING):
