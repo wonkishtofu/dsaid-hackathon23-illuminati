@@ -186,7 +186,7 @@ for y in range(1, 9):
     tool_config = IndexToolConfig(
         query_engine=query_engine,
         name=f"Vector Index {y}",
-        description=f"Necessary for when you want to answer queries about solar energy, EMA's energy policy, and other energy policy related matters. This is document index: {y} ",
+        description=f"Useful for answering queries regarding Solar Energy, Singapore's National Energy Policies or the installation of Solar PV. {index_summary_new[y]} ",  
         tool_kwargs={"return_direct": True, "return_sources": True},
     )
     index_configs.append(tool_config)

@@ -111,23 +111,23 @@ index_summaries = [f"These are the official documents from EMA. This is document
 
 index_summary_new = []
 
-index_summary_new.append('These are official documents Q&A documents from EMA. Structured as a CSV with the following columns: (Title -- Questions -- Answers) This is document index 1.')
+index_summary_new.append('These are official documents Q&A documents from EMA. Structured as a CSV with the following columns: (Title -- Questions -- Answers)')
 
-index_summary_new.append('These are official documents Q&A documents from EMA. Structured as a CSV with the following columns: (Title -- Questions -- Answers) This is document index 2.')
+index_summary_new.append('These are official documents Q&A documents from EMA. Structured as a CSV with the following columns: (Title -- Questions -- Answers)')
 
-index_summary_new.append('This official document from EMA contains all minister speeches on Singapore\s energy policy. Structured as a CSV with the following columns: (Title -- Date -- Content) This is document index 3.')
+index_summary_new.append('This official document from EMA contains all minister speeches on Singapore\s energy policy. Structured as a CSV with the following columns: (Title -- Date -- Content)')
 
-index_summary_new.append('This official document from EMA summaries of videos in document index 3. Structured as a CSV with the following columns: (Title -- Summary) This is document index 4.')
+index_summary_new.append('This official document from EMA summaries of videos in document index 3. Structured as a CSV with the following columns: (Title -- Summary)')
 
-index_summary_new.append('This official document from EMA contains the official video transcript of policy explainers from EMA. Structured as a CSV with the following columns: (URL Source -- Title -- Content) This is document index 5.')
+index_summary_new.append('This official document from EMA contains the official video transcript of policy explainers from EMA. Structured as a CSV with the following columns: (URL Source -- Title -- Content)')
 
-index_summary_new.append('This official document from EMA contains the contents of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (URL Source -- Title -- Content) This is document index 6.')
+index_summary_new.append('This official document from EMA contains the contents of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (URL Source -- Title -- Content)')
 
-index_summary_new.append('This official document from EMA contains the Question and Answer component of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (URL Source -- Title -- Content) This is document index 7.')
+index_summary_new.append('This official document from EMA contains the Question and Answer component of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (URL Source -- Title -- Content)')
 
-index_summary_new.append('This official document from EMA contains the summaries of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (Title -- Summary) This is document index 8.')
+index_summary_new.append('This official document from EMA contains the summaries of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (Title -- Summary)')
 
-index_summary_new.append('This official document from EMA contains the raw content of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (Chapter -- Subheader1 -- Subheader2 -- Text) This is document index 9.')
+index_summary_new.append('This official document from EMA contains the raw content of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (Chapter -- Subheader1 -- Subheader2 -- Text)')
 
 
 # set number of output tokens
@@ -446,7 +446,7 @@ async def main(client: Client):
                             # get annual and ytd demand estimate
                             annual_demand, ytd_demand, hours_elapsed = get_demand_estimate(DT, DWELLING.value)
                             # assign to global variables
-                            global_vars.update([('HOURS_ELAPSED', hours_elapsed), ('YTD_DEMAND', ytd_demand)], ('ANNUAL_DEMAND', annual_demand)])
+                            global_vars.update([('HOURS_ELAPSED', hours_elapsed), ('YTD_DEMAND', ytd_demand), ('ANNUAL_DEMAND', annual_demand)])
                             
                             # output grid with annual and ytd demand
                             with ui.column().classes('w-100 items-left'):
@@ -504,7 +504,7 @@ async def main(client: Client):
                     try:
                         output_arr = get_solar_estimate(global_vars['LAT'], global_vars['LON'],
                                                         global_vars['AZIMUTH'], global_vars['TILT'])
-                        ui.label(f"{len(output_arr}, {sum(output_arr}")
+                        ui.label(f"{len(output_arr), sum(output_arr)}")
                     except:
                         pass
                     
