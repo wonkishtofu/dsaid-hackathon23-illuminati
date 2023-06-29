@@ -17,14 +17,14 @@ from nicegui.events import MouseEventArguments
 import sys
 
 """ LOAD API KEYS FROM ENV """
-#_ = load_dotenv(find_dotenv(filename='tab2_apikeys.txt'))
-_ = load_dotenv(find_dotenv())
+_ = load_dotenv(find_dotenv(filename='tab2_apikeys.txt'))
+#_ = load_dotenv(find_dotenv())
 PVWATTS_API_KEY = os.environ['PVWATTS_API_KEY']
 OPENUV_API_KEY = os.environ['OPENUV_API_KEY']
 TOMTOM_API_KEY = os.environ['TOMTOM_API_KEY']
 
-#sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/')
-sys.path.insert(0, r'../api/')
+sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/')
+#sys.path.insert(0, r'../api/')
 from conversions import to_bearing
 from demand import get_demand_estimate
 from geocode import geocode
@@ -54,13 +54,13 @@ from llama_index.query_engine.transform_query_engine import \
     TransformQueryEngine
 
 # adding Xuean's node post processor
-sys.path.insert(0, '../chatbot/')
-#sys.path.insert(0, r'.../dsaid-hackathon23-illuminati/chatbot/') # Xuean's edit - original line didn't work on my laptop
+#sys.path.insert(0, '../chatbot/')
+sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/') # Xuean's edit - original line didn't work on my laptop
 from custom_node_processor import CustomSolarPostprocessor
 
 from dotenv import find_dotenv, load_dotenv
 
-_ = load_dotenv(find_dotenv())
+_ = load_dotenv(find_dotenv(find_dotenv(filename='C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/apikey.txt')))
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
 # list ema docs
@@ -72,7 +72,7 @@ doc_set = {}
 all_docs = []
 
 for ema_num in ema:
-    ema_docs = loader.load_data(file=Path(f'../chatbot/data/EMA/EMA_{ema_num}.csv'), split_documents=False)
+    ema_docs = loader.load_data(file=Path(f'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/data/EMA/EMA_{ema_num}.csv'), split_documents=False)
     # insert year metadata into each year
     for d in ema_docs:
         d.extra_info = {"ema_num": ema_num}
@@ -216,6 +216,7 @@ def get_chatbot_respone(text_input):
 # ESTIMATOR FUNCTIONS #
 #######################
 
+
 #############
 # START GUI #
 #############
@@ -308,15 +309,19 @@ async def main(client: Client):
             
         # what appears in estimator tab
         with ui.tab_panel(estimator):
+            # initiate variables 
+            global_vars = {'lat': 1, 'lon': 1, 'Azimuth': 1, 'Tilt': 1, 'Hours_elapsed': 0, 'num_panels': 1}
+
             # with ui.column().classes('w-full items-center'):
             with ui.stepper().props('vertical').classes('w-full') as stepper:
+
                 with ui.step('Generation'):
                     # 1. enter address
                     ADDRESS = ui.input(label = 'Enter an address or postal code',
                        validation = {'Input too short': lambda value: len(value) >= 5})\
-                        .on('keydown.enter', lambda: trigger_generation.refresh())\
                         .props('clearable')\
-                        .classes('w-80')
+                        .classes('w-80')\
+                        .on('keydown.enter', lambda: trigger_generation.refresh())
                     
                     # generation function for ESTIMATOR, triggered upon entering an address
                     @ui.refreshable
@@ -337,6 +342,9 @@ async def main(client: Client):
                                 azimuth, tilt = get_optimal_angles(LAT, LON, exposure_times)
                                 AC_output = get_solar_estimate(LAT, LON, azimuth, tilt)
                                 
+                                # assign to global variables
+                                global_vars.update([('lat', LAT), ('lon', LON), ('Azimuth', azimuth), ('Tilt', tilt)]) 
+
                                 with ui.column().classes('w-100 items-left'):
                                     ui.label(f"{SYSTEM_MSG}")
                                     ui.label(f"The coordinates are ({LAT}, {LON})")
@@ -375,16 +383,24 @@ async def main(client: Client):
                                         ui.label("Tilt")
                                         ui.label(f"{np.round(tilt,2)}°")
                                 
+                                #Make next button appear
+                                with ui.stepper_navigation():
+                                    with ui.row():
+                                        #ui.button('Regenerate Results', on_click = lambda: trigger_generation.refresh())
+                                        ui.button('Next', on_click = stepper.next)
+
                             except AssertionError:
                                 ui.label("Oops! The address you have queried was not found in Singapore")
                                 ui.label("Please input a Singapore address or postal code or simply type 'SUNNY' and hit enter for an island-averaged estimate.")
+<<<<<<< HEAD
                     trigger_generation()
                     await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
+=======
+>>>>>>> cd4c62189e24e7905b032cc00f34451157a8f4e5
                     
-                    # TODO: grey-out NEXT button unless there is a valid output for Generation step
-                    with ui.stepper_navigation():
-                        ui.button('Next', on_click = stepper.next)
-                        
+                    trigger_generation()
+                    await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
+                                     
                 with ui.step('Consumption'):
                     # 2. enter dwelling type
                     DWELLING = ui.select(label = 'Select dwelling type',
@@ -392,33 +408,85 @@ async def main(client: Client):
                         with_input = True)\
                         .classes('w-80')\
                         .on('update:model-value', lambda: trigger_roofarea.refresh())
-                    
+                    ui.label("\n")
+
                     # refresh roof area function for ESTIMATOR triggered upon entering dwelling type
                     @ui.refreshable
                     def trigger_roofarea():
                         # FUNCTION to trigger roof area user input if dwelling type is Landed Property
                         DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-                        annual_demand, ytd_demand, hours_elapsed = get_demand_estimate(DT, DWELLING.value)
-                        ui.label(f"{annual_demand}")
-                        ui.label(f"{ytd_demand}")
-                        ui.label(f"{hours_elapsed}")
+                        try:
+                            annual_demand, ytd_demand, hours_elapsed = get_demand_estimate(DT, DWELLING.value)
+                            global_vars.update(Hours_elapsed = hours_elapsed)
+                            with ui.column().classes('w-100 items-left'):
+                                ui.row()
+                                ui.label(f"Estimated Energy Consumption of {DWELLING.value}")
+
+                                with ui.grid(columns = 2):
+                                    ui.label(f"Annual:")
+                                    ui.label(f"{annual_demand} kWh")
+
+                                    ui.label(f"Year-to-date*:")
+                                    ui.label(f"{ytd_demand} kWh")
+                                ui.label("*estimated to the hour").style("font-weight: 300")
+                                ui.label("\n")
+                        except:
+                            pass
                         
-                        num_panels = 1
                         
                         if DWELLING.value == "Landed Property":
-                            ui.label('Estimate your roof area in m²')
-                            with ui.row():
-                                ROOF_AREA = ui.slider(min = 10, max = 200, value = 10).classes('w-50')
-                                ui.label().bind_text_from(ROOF_AREA, 'value')
-                            
-                            num_panels = int(np.floor(float(ROOF_AREA.value)/1.6)) # TODO: needs to refresh
-                            ui.label(f"You can fit {num_panels} Standard 250 W (1.6 m²) Solar Panels on your roof.")
+                            ui.label('Estimate your roof area in m²').style("font-weight: 1000")
+
+                            with ui.column().classes('w-100 items-left'):
+                                ui.separator().classes('w-80')
+                                ROOF_AREA = ui.slider(min = 10, max = 200, value = 10).classes('w-80')
+                                ui.label().bind_text_from(ROOF_AREA, 'value', backward= lambda x: f"{x} m²")
+                                ui.separator().classes('w-80')
+                                ui.label("\n")
+
+                            def update_num_panels(ROOF_AREA):
+                                global_vars.update(num_panels = int(np.floor(float(ROOF_AREA)/1.6)))
+
+                                return f"You can fit {int(np.floor(float(ROOF_AREA)/1.6))} Standard 250 W (1.6 m²) Solar Panels on your roof."
+
+
+                            with ui.column().classes('w-100 items-left'):
+                                with ui.grid(columns = 1):
+                                    ui.label()\
+                                        .bind_text_from(ROOF_AREA, 'value', backward = lambda x: update_num_panels(x))\
+                                        .style("font-weight: 1000; font-size: 100%")
+                        
+                        with ui.stepper_navigation():
+                            ui.button('Next', on_click = stepper.next)
+                            ui.button('Back', on_click = stepper.previous).props('flat')
                             
                     trigger_roofarea()
+
+                with ui.step('Supply'):
+                    ui.label().bind_text_from(global_vars, 'lat', backward=lambda x: f'{x}')
+                    ui.label().bind_text_from(global_vars, 'lon', backward=lambda x: f'{x}')
+                    ui.label().bind_text_from(global_vars, 'Azimuth', backward=lambda x: f'{x}')
+                    ui.label().bind_text_from(global_vars, 'Tilt', backward=lambda x: f'{x}')
+                    ui.label().bind_text_from(global_vars, 'num_panels', backward=lambda x: f'{x}')
+
+                    try:
+                        output_arr = get_solar_estimate(global_vars['lat'], global_vars['lon'],
+                                                        global_vars['Azimuth'], global_vars['Tilt'])
+                    except:
+                        pass
                     
+                    with ui.column().classes('w-100 items-left'):
+                        ui.label(f"Estimated Energy Generation")
+                        with ui.grid(columns = 2):
+                            ui.label(f"Annual:")
+                            ui.label(f"{global_vars['num_panels']*sum(output_arr)/1000} kWh")
+
+                            ui.label(f"Year-to-date*:")
+                            ui.label(f"{global_vars['num_panels']*sum(output_arr[:global_vars['Hours_elapsed']])/1000} kWh")
+                            ui.label("*estimated to the hour").style("font-weight: 300")
+
                     with ui.stepper_navigation():
-                        ui.button('Next', on_click = stepper.next)
-                        ui.button('Back', on_click = stepper.previous).props('flat')
+                            ui.button('Back', on_click = stepper.previous).props('flat')
                 
         # what appears in realtime tab
         # TODO: what are the needed params?
