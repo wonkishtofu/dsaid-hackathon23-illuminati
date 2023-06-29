@@ -111,23 +111,23 @@ index_summaries = [f"These are the official documents from EMA. This is document
 
 index_summary_new = []
 
-index_summary_new.append('These are official documents Q&A documents from EMA. Structured as a CSV with the following columns: (Title -- Questions -- Answers) This is document index 1.')
+index_summary_new.append('These are official documents Q&A documents from EMA. Structured as a CSV with the following columns: (Title -- Questions -- Answers)')
 
-index_summary_new.append('These are official documents Q&A documents from EMA. Structured as a CSV with the following columns: (Title -- Questions -- Answers) This is document index 2.')
+index_summary_new.append('These are official documents Q&A documents from EMA. Structured as a CSV with the following columns: (Title -- Questions -- Answers)')
 
-index_summary_new.append('This official document from EMA contains all minister speeches on Singapore\s energy policy. Structured as a CSV with the following columns: (Title -- Date -- Content) This is document index 3.')
+index_summary_new.append('This official document from EMA contains all minister speeches on Singapore\s energy policy. Structured as a CSV with the following columns: (Title -- Date -- Content)')
 
-index_summary_new.append('This official document from EMA summaries of videos in document index 3. Structured as a CSV with the following columns: (Title -- Summary) This is document index 4.')
+index_summary_new.append('This official document from EMA summaries of videos in document index 3. Structured as a CSV with the following columns: (Title -- Summary)')
 
-index_summary_new.append('This official document from EMA contains the official video transcript of policy explainers from EMA. Structured as a CSV with the following columns: (URL Source -- Title -- Content) This is document index 5.')
+index_summary_new.append('This official document from EMA contains the official video transcript of policy explainers from EMA. Structured as a CSV with the following columns: (URL Source -- Title -- Content)')
 
-index_summary_new.append('This official document from EMA contains the contents of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (URL Source -- Title -- Content) This is document index 6.')
+index_summary_new.append('This official document from EMA contains the contents of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (URL Source -- Title -- Content)')
 
-index_summary_new.append('This official document from EMA contains the Question and Answer component of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (URL Source -- Title -- Content) This is document index 7.')
+index_summary_new.append('This official document from EMA contains the Question and Answer component of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (URL Source -- Title -- Content)')
 
-index_summary_new.append('This official document from EMA contains the summaries of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (Title -- Summary) This is document index 8.')
+index_summary_new.append('This official document from EMA contains the summaries of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (Title -- Summary)')
 
-index_summary_new.append('This official document from EMA contains the raw content of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (Chapter -- Subheader1 -- Subheader2 -- Text) This is document index 9.')
+index_summary_new.append('This official document from EMA contains the raw content of EMA\'s Official Solar Handbook. Structured as a CSV with the following columns: (Chapter -- Subheader1 -- Subheader2 -- Text)')
 
 
 # set number of output tokens
@@ -477,7 +477,24 @@ async def main(client: Client):
                     trigger_roofarea() # end of function
                     await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
 
+<<<<<<< HEAD
                 with ui.step('Generation'):
+=======
+                with ui.step('Supply'):
+                    ui.label().bind_text_from(global_vars, 'LAT', backward=lambda x: f'{x}')
+                    ui.label().bind_text_from(global_vars, 'LON', backward=lambda x: f'{x}')
+                    ui.label().bind_text_from(global_vars, 'AZIMUTH', backward=lambda x: f'{x}')
+                    ui.label().bind_text_from(global_vars, 'TILT', backward=lambda x: f'{x}')
+                    ui.label().bind_text_from(global_vars, 'NUM_PANELS', backward=lambda x: f'{x}')
+
+                    try:
+                        output_arr = get_solar_estimate(global_vars['LAT'], global_vars['LON'],
+                                                        global_vars['AZIMUTH'], global_vars['TILT'])
+                        ui.label(f"{len(output_arr), sum(output_arr)}")
+                    except:
+                        pass
+                    
+>>>>>>> 32ce47860baec4b28af647b5c23d977d93a45186
                     with ui.column().classes('w-100 items-left'):
                         ui.label().bind_text_from(global_vars, 'LAT', backward=lambda x: f'{x}')
                         ui.label().bind_text_from(global_vars, 'LON', backward=lambda x: f'{x}')
