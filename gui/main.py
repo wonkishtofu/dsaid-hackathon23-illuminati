@@ -345,8 +345,8 @@ async def main(client: Client):
                         .on('keydown.enter', lambda: trigger_generation.refresh())
                     
                     #Spinner before results load
-                    spinner = ui.spinner(size='lg')
-                    spinner.visible = False
+                    # spinner = ui.spinner(size='lg')
+                    # spinner.visible = False
                     
                     # generation function for ESTIMATOR, triggered upon entering an address
                     @ui.refreshable
@@ -360,85 +360,84 @@ async def main(client: Client):
                         4. get_optimal_angles to get optimal azimuth and altitude angles for PVWatts query
                         """
 
-                        def generate_demand():
-                            if ADDRESS.value != "":
-                                try:
-                                    # sequentially run all the functions to return outputs
-                                    LAT, LON, SYSTEM_MSG = geocode(ADDRESS.value)
-                                    DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) # UTC
-                                    exposure_times = get_suninfo(LAT, LON, DT)
-                                    azimuth, tilt = get_optimal_angles(LAT, LON, exposure_times)
-                                    AC_output, SYSTEM_MSG2 = get_solar_estimate(LAT, LON, azimuth, tilt)
-                                    hours_elapsed = get_hours_elapsed(DT)
-                                    
-                                    # calculate annual & year-to-date generation estimate
-                                    annual_supply = sum(AC_output)/1000
-                                    ytd_supply = sum(AC_output[:hours_elapsed])/1000
-                                    
-                                    # assign to global variables
-                                    global_vars.update([('LAT', LAT), ('LON', LON),
-                                                        ('AZIMUTH', azimuth), ('TILT', tilt),
-                                                        ('YTD_SUPPLY', ytd_supply), ('ANNUAL_SUPPLY', annual_supply),
-                                                        ('HOURS_ELAPSED', hours_elapsed), ('SYSTEM_MSG', SYSTEM_MSG2)])
-                                    rerun_vars.update([('YTD_SUPPLY', ytd_supply), ('ANNUAL_SUPPLY', annual_supply)])
-                                    
-                                    # output the system message and the coordinates
-                                    with ui.column().classes('w-100 items-left'):
-                                        ui.label(f"{SYSTEM_MSG}")
-                                        ui.label(f"The coordinates are ({LAT}, {LON})")
-                                        
-                                        # output sun icon and current time
-                                        with ui.row():
-                                            if pd.to_datetime(DT) < pd.to_datetime(exposure_times['dawn']) or pd.to_datetime(DT) > pd.to_datetime(exposure_times['dusk']):
-                                                ui.image('./assets/nosun.svg').classes('w-8')
-                                                ui.label(f"\nCurrent time is {time_readable(utc_to_sgt(DT))}\n").style("font-weight: 1000")
-                                                ui.image('./assets/nosun.svg').classes('w-8')
-                                            elif pd.to_datetime(DT) <= pd.to_datetime(exposure_times['sunriseEnd']) or pd.to_datetime(DT) >= pd.to_datetime(exposure_times['sunsetStart']):
-                                                ui.image('./assets/halfsun.svg').classes('w-8')
-                                                ui.label(f"\nCurrent time is {time_readable(utc_to_sgt(DT))}\n").style("font-weight: 1000")
-                                                ui.image('./assets/halfsun.svg').classes('w-8')
-                                            else:
-                                                ui.image('./assets/fullsun.svg').classes('w-8')
-                                                ui.label(f"\nCurrent time is {time_readable(utc_to_sgt(DT))}\n").style("font-weight: 1000")
-                                                ui.image('./assets/fullsun.svg').classes('w-8')
-                                                
-                                        # output grid with solar exposure timeline
-                                        ui.label("Today's Expected Solar Exposure:\n").style("font-weight: 1000")
-                                        with ui.grid(columns = 2):
-                                            ui.label(f"{time_readable(utc_to_sgt(exposure_times['dawn']))}")
-                                            ui.label("DAWN")
-                                            ui.label(f"{time_readable(utc_to_sgt(exposure_times['sunrise']))}")
-                                            ui.label("SUNRISE")
-                                            ui.label(f"{time_readable(utc_to_sgt(exposure_times['solarNoon']))}")
-                                            ui.label("SOLAR NOON")
-                                            ui.label(f"{time_readable(utc_to_sgt(exposure_times['sunset']))}")
-                                            ui.label("SUNSET")
-                                            ui.label(f"{time_readable(utc_to_sgt(exposure_times['dusk']))}")
-                                            ui.label("DUSK")
-                                        
-                                        # output grid with optimal solar panel orientation
-                                        ui.label("Optimal Solar Panel Orientation:\n").style("font-weight: 1000")
-                                        with ui.grid(columns = 2):
-                                            ui.label("Azimuth")
-                                            ui.label(f"{np.round(azimuth, 2)}° ({to_bearing(azimuth)})")
-                                            ui.label("Tilt")
-                                            ui.label(f"{np.round(tilt,2)}°")
-                                    
-                                    # make NEXT button appear
-                                    with ui.stepper_navigation():
-                                        with ui.row():
-                                            # ui.button('Regenerate Results', on_click = lambda: trigger_generation.refresh())
-                                            ui.button('Next', on_click = stepper.next)
+                        #def generate_demand():
+                        if ADDRESS.value != "":
+                            try:
+                                # sequentially run all the functions to return outputs
+                                LAT, LON, SYSTEM_MSG = geocode(ADDRESS.value)
+                                DT = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) # UTC
+                                exposure_times = get_suninfo(LAT, LON, DT)
+                                azimuth, tilt = get_optimal_angles(LAT, LON, exposure_times)
+                                AC_output, SYSTEM_MSG2 = get_solar_estimate(LAT, LON, azimuth, tilt)
+                                hours_elapsed = get_hours_elapsed(DT)
                                 
-                                except AssertionError:
-                                    with ui.column().classes('w-100 items-left'):
-                                        ui.label("Oops! The address you have queried was not found in Singapore")
-                                        ui.label("Please input a Singapore address or postal code or simply type 'SUNNY' and hit enter for an island-averaged estimate.")
-                                spinner.set_visibility(False)
+                                # calculate annual & year-to-date generation estimate
+                                annual_supply = sum(AC_output)/1000
+                                ytd_supply = sum(AC_output[:hours_elapsed])/1000
+                                
+                                # assign to global variables
+                                global_vars.update([('LAT', LAT), ('LON', LON),
+                                                    ('AZIMUTH', azimuth), ('TILT', tilt),
+                                                    ('YTD_SUPPLY', ytd_supply), ('ANNUAL_SUPPLY', annual_supply),
+                                                    ('HOURS_ELAPSED', hours_elapsed), ('SYSTEM_MSG', SYSTEM_MSG2)])
+                                rerun_vars.update([('YTD_SUPPLY', ytd_supply), ('ANNUAL_SUPPLY', annual_supply)])
+                                
+                                # output the system message and the coordinates
+                                with ui.column().classes('w-100 items-left'):
+                                    ui.label(f"{SYSTEM_MSG}")
+                                    ui.label(f"The coordinates are ({LAT}, {LON})")
+                                    
+                                    # output sun icon and current time
+                                    with ui.row():
+                                        if pd.to_datetime(DT) < pd.to_datetime(exposure_times['dawn']) or pd.to_datetime(DT) > pd.to_datetime(exposure_times['dusk']):
+                                            ui.image('./assets/nosun.svg').classes('w-8')
+                                            ui.label(f"\nCurrent time is {time_readable(utc_to_sgt(DT))}\n").style("font-weight: 1000")
+                                            ui.image('./assets/nosun.svg').classes('w-8')
+                                        elif pd.to_datetime(DT) <= pd.to_datetime(exposure_times['sunriseEnd']) or pd.to_datetime(DT) >= pd.to_datetime(exposure_times['sunsetStart']):
+                                            ui.image('./assets/halfsun.svg').classes('w-8')
+                                            ui.label(f"\nCurrent time is {time_readable(utc_to_sgt(DT))}\n").style("font-weight: 1000")
+                                            ui.image('./assets/halfsun.svg').classes('w-8')
+                                        else:
+                                            ui.image('./assets/fullsun.svg').classes('w-8')
+                                            ui.label(f"\nCurrent time is {time_readable(utc_to_sgt(DT))}\n").style("font-weight: 1000")
+                                            ui.image('./assets/fullsun.svg').classes('w-8')
+                                            
+                                    # output grid with solar exposure timeline
+                                    ui.label("Today's Expected Solar Exposure:\n").style("font-weight: 1000")
+                                    with ui.grid(columns = 2):
+                                        ui.label(f"{time_readable(utc_to_sgt(exposure_times['dawn']))}")
+                                        ui.label("DAWN")
+                                        ui.label(f"{time_readable(utc_to_sgt(exposure_times['sunrise']))}")
+                                        ui.label("SUNRISE")
+                                        ui.label(f"{time_readable(utc_to_sgt(exposure_times['solarNoon']))}")
+                                        ui.label("SOLAR NOON")
+                                        ui.label(f"{time_readable(utc_to_sgt(exposure_times['sunset']))}")
+                                        ui.label("SUNSET")
+                                        ui.label(f"{time_readable(utc_to_sgt(exposure_times['dusk']))}")
+                                        ui.label("DUSK")
+                                    
+                                    # output grid with optimal solar panel orientation
+                                    ui.label("Optimal Solar Panel Orientation:\n").style("font-weight: 1000")
+                                    with ui.grid(columns = 2):
+                                        ui.label("Azimuth")
+                                        ui.label(f"{np.round(azimuth, 2)}° ({to_bearing(azimuth)})")
+                                        ui.label("Tilt")
+                                        ui.label(f"{np.round(tilt,2)}°")
+                                
+                                # make NEXT button appear
+                                with ui.stepper_navigation():
+                                    with ui.row():
+                                        # ui.button('Regenerate Results', on_click = lambda: trigger_generation.refresh())
+                                        ui.button('Next', on_click = stepper.next)
+                            
+                            except AssertionError:
+                                with ui.column().classes('w-100 items-left'):
+                                    ui.label("Oops! The address you have queried was not found in Singapore")
+                                    ui.label("Please input a Singapore address or postal code or simply type 'SUNNY' and hit enter for an island-averaged estimate.")
                         
-                        spinner.set_visibility(True)
-                        await generate_demand()
-                        spinner.set_visibility(False)
+                        # spinner.set_visibility(True)
+                        # await generate_demand()
+                        # spinner.set_visibility(False)
                         # end of function
 
                     trigger_generation() 
