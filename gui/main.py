@@ -292,7 +292,7 @@ async def main(client: Client):
         with ui.tabs().classes('w-full') as tabs:
             chatbot = ui.tab('CHATBOT')
             estimator = ui.tab('ESTIMATOR')
-            realtime = ui.tab('REALTIME')
+            #realtime = ui.tab('REALTIME')
             resources = ui.tab('RESOURCES')
     
     # set tabs in a tab panel
@@ -331,8 +331,6 @@ async def main(client: Client):
                            'SYSTEM_MSG': ""}
             rerun_vars = {'YTD_SUPPLY': 0, 'ANNUAL_SUPPLY': 0,
                           'NUM_PANELS': 1} # variables that can change as you toggle back and forth
-            
-            
 
             with ui.stepper().props('vertical').classes('w-full') as stepper:
 
@@ -538,7 +536,8 @@ async def main(client: Client):
                     # make BACK button appear
                     with ui.stepper_navigation():
                         ui.button('Back', on_click = stepper.previous).props('flat')
-                
+        """
+        # COMMENTING OUT REAL-TIME TAB
         # what appears in realtime tab
         # TODO: what are the needed params?
         with ui.tab_panel(realtime):
@@ -567,6 +566,7 @@ async def main(client: Client):
                                             events=['click'],
                                             cross=True) # show cross on hover
                 ii.tooltip('After')
+        """
         
         # what appears in resources tab
         with ui.tab_panel(resources):
@@ -576,15 +576,15 @@ async def main(client: Client):
                     # with ui.column().classes('w-full'):
                     ui.mermaid('''
                     graph LR;
-                        id1[PV CELL TYPES]-->id2[Crystalline Silicon];
-                        id1[PV CELL TYPES]-->id3[Thin Film];
-                        id2[Crystalline Silicon]-->Polycrystalline;
-                        id2[Crystalline Silicon]-->Monocrystalline;
-                        id3[Thin Film]-->id4[Amorphous Silicon, a-Si];
-                        id3[Thin Film]-->id5[Tandem a-Si];
-                        id3[Thin Film]-->id6[Microcrystalline];
-                        id3[Thin Film]-->CIGS;
-                        id3[Thin Film]-->CdTe;
+                        id1[PV CELL TYPES   ]-->id2[Crystalline Silicon   ];
+                        id1[PV CELL TYPES   ]-->id3[Thin Film   ];
+                        id2[Crystalline Silicon   ]-->id7[Polycrystalline   ];
+                        id2[Crystalline Silicon   ]-->id8[Monocrystalline   ];
+                        id3[Thin Film   ]-->id4[Amorphous Silicon, a-Si   ];
+                        id3[Thin Film   ]-->id5[Tandem a-Si   ];
+                        id3[Thin Film   ]-->id6[Microcrystalline   ];
+                        id3[Thin Film   ]-->id9[CIGS   ];
+                        id3[Thin Film   ]-->id10[CdTe   ];
                     ''')
                     
             with ui.expansion('Licensing Guidelines').classes('w-full').style('font-weight:1000'):
