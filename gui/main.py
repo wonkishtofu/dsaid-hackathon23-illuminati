@@ -17,15 +17,15 @@ import mermaid
 import sys
 
 """ LOAD API KEYS FROM ENV """
-#_ = load_dotenv(find_dotenv(filename='tab2_apikeys.txt')) # XUEAN PATH
-_ = load_dotenv(find_dotenv())
+_ = load_dotenv(find_dotenv(filename='tab2_apikeys.txt')) # XUEAN PATH
+#_ = load_dotenv(find_dotenv())
 PVWATTS_API_KEY = os.environ['PVWATTS_API_KEY']
 OPENUV_API_KEY = os.environ['OPENUV_API_KEY']
 TOMTOM_API_KEY = os.environ['TOMTOM_API_KEY']
 
 """ IMPORT FUNCTIONS FOR ESTIMATOR TAB """
-#sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/') # XUEAN PATH
-sys.path.insert(0, r'../api/')
+sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/') # XUEAN PATH
+#sys.path.insert(0, r'../api/')
 from conversions import to_bearing
 from demand import get_demand_estimate, get_hours_elapsed
 from geocode import geocode
@@ -55,16 +55,16 @@ from llama_index.query_engine.transform_query_engine import \
     TransformQueryEngine
 
 ## ADDING XUEAN'S NODE POST PROCESSOR
-sys.path.insert(0, '../chatbot/')
-sys.path.insert(1,'../gui/assets/')
-#sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/') # XUEAN PATH
-from custom_node_processor import CustomSolarPostprocessor
+# sys.path.insert(0, '../chatbot/')
+# sys.path.insert(1,'../gui/assets/')
+# #sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/') # XUEAN PATH
+# from custom_node_processor import CustomSolarPostprocessor
 
 from dotenv import find_dotenv, load_dotenv
 
 #_ = load_dotenv(find_dotenv(find_dotenv(filename='C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/chatbot/apikey.txt'))) # XUEAN PATH
-_ = load_dotenv(find_dotenv())
-openai.api_key = os.environ["OPENAI_API_KEY"]
+# _ = load_dotenv(find_dotenv())
+# openai.api_key = os.environ["OPENAI_API_KEY"]
 
 """
 # list ema docs
@@ -263,6 +263,9 @@ async def chat_messages(own_id: str) -> None:
     await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
 
 """
+# bot avatar
+bot_avatar = 'https://raw.githubusercontent.com/wonkishtofu/dsaid-hackathon23-illuminati/main/gui/assets/bot.png'
+
 @ui.page('/')
 async def main(client: Client):
     """
@@ -280,30 +283,36 @@ async def main(client: Client):
         messages.append(('Bot', bot_avatar, response))
         thinking = False
         text.set_value(None)
-    """
+
     def on_tab_change(event):
         print(event.value)
         # remove the text and avatar when move to different tab
         # have to do this cos they are in footer
-        avatar_ui.set_visibility(event.value == 'ESTIMATOR')
-        text.set_visibility(event.value == 'ESTIMATOR')
+        avatar_ui.set_visibility(event.value == 'CHATBOT')
+        text.set_visibility(event.value == 'CHATBOT')
+    
+    """
     
     # define the tabs
     with ui.header().classes(replace = 'row items-center') as header:
         with ui.tabs().classes('w-full') as tabs:
-            #chatbot = ui.tab('CHATBOT')
+            chatbot = ui.tab('CHATBOT')
             estimator = ui.tab('ESTIMATOR')
             #realtime = ui.tab('REALTIME')
             resources = ui.tab('RESOURCES')
     
     # set tabs in a tab panel
     with ui.tab_panels(tabs,
-                       value = estimator,
-                       on_change = on_tab_change).classes('w-full'):
+                       value = chatbot).classes('w-full'): #on_change = on_tab_change
         
-        """
+        
         # what appears in chatbot tab
         with ui.tab_panel(chatbot):
+            with ui.column().classes('w-full items-center'):
+                ui.image(bot_avatar).classes('w-20 h-20')
+                ui.link('Talk to Jamie Neo!', 'https://ema-doc-search.vercel.app/', new_tab = True).style('font-weight: 1000; font-size: 150%')
+
+            """
             user_id = str('6af9dba1-022a-41ba-8f5b-34c21d1cc89a')
             avatar = f'https://robohash.org/{user_id}?bgset=bg2'
             
