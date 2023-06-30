@@ -66,6 +66,7 @@ from dotenv import find_dotenv, load_dotenv
 _ = load_dotenv(find_dotenv())
 openai.api_key = os.environ["OPENAI_API_KEY"]
 
+"""
 # list ema docs
 ema = [1,2,3,4,5,6,7,8,9]
 
@@ -83,11 +84,11 @@ for ema_num in ema:
     doc_set[ema_num] = ema_docs
     all_docs.extend(ema_docs)
 
-"""
+
 ### Setup a Vector Index for each EMA doc in the data file
-We setup a separate vector index for each file
-We also optionally initialize a "global" index by dumping all files into the vector store.
-"""
+# We setup a separate vector index for each file
+# We also optionally initialize a "global" index by dumping all files into the vector store.
+
 
 # initialize simple vector indices + global vector index
 # NOTE: don't run this cell if the indices are already loaded!
@@ -102,11 +103,9 @@ index_set = {}
 for ema_num in ema:
     index_set[ema_num] = cur_index
 
-"""
 ### Composing a Graph to synthesize answers across all the existing EMA docs.
-We want our queries to aggregate/synthesize information across *all* docs.
-To do this, we define a List index on top of the 4 vector indices.
-"""
+# We want our queries to aggregate/synthesize information across *all* docs.
+# To do this, we define a List index on top of the 4 vector indices.
 
 index_summaries = [f"These are the official documents from EMA. This is document index {ema_num}." for ema_num in ema]
 
@@ -144,10 +143,8 @@ graph = ComposableGraph.from_indices(
     service_context=service_context
 )
 
-"""
 ## Setting up the Chatbot Agent
-We use Langchain to define the outer chatbot abstraction. We use LlamaIndex as a core Tool within this abstraction.
-"""
+# We use Langchain to define the outer chatbot abstraction. We use LlamaIndex as a core Tool within this abstraction.
 
 # define a decompose transform
 decompose_transform = DecomposeQueryTransform(
@@ -216,7 +213,7 @@ agent_chain = create_llama_chat_agent(
     memory=memory,
 )
 
-inj = """
+inj = '''
         
         Please respond to the statement above.
         Your name is Jamie Neo. Your pronouns are they/them.
@@ -226,10 +223,11 @@ inj = """
         If the user is unclear, you can ask the user to clarify the question.
         When in doubt and/or the answer is not in the EMA documents, you can say "I am sorry but do not know the answer. Please get in touch with EMA through this webpage: https://www.ema.gov.sg/"
         Keep your answers short and terse. Be polite at all times.
-    """
+    '''
 
 def get_chatbot_respone(text_input):
     return agent_chain.run(input = text_input + inj)
+"""
 
 #######################
 # END HOT LOADING LLM #
@@ -239,6 +237,7 @@ def get_chatbot_respone(text_input):
 # START GUI #
 #############
 
+"""
 messages: List[Tuple[str, str, str, str]] = []
 thinking: bool = False
 
@@ -263,8 +262,10 @@ async def chat_messages(own_id: str) -> None:
         ui.spinner(size='3rem').classes('self-center')
     await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
 
+"""
 @ui.page('/')
 async def main(client: Client):
+    """
     async def send() -> None:
         user_input = text.value
         messages.append((user_id, avatar, user_input))
@@ -279,27 +280,28 @@ async def main(client: Client):
         messages.append(('Bot', bot_avatar, response))
         thinking = False
         text.set_value(None)
-
+    """
     def on_tab_change(event):
         print(event.value)
         # remove the text and avatar when move to different tab
         # have to do this cos they are in footer
-        avatar_ui.set_visibility(event.value == 'CHATBOT')
-        text.set_visibility(event.value == 'CHATBOT')
-        
+        avatar_ui.set_visibility(event.value == 'ESTIMATOR')
+        text.set_visibility(event.value == 'ESTIMATOR')
+    
     # define the tabs
     with ui.header().classes(replace = 'row items-center') as header:
         with ui.tabs().classes('w-full') as tabs:
-            chatbot = ui.tab('CHATBOT')
+            #chatbot = ui.tab('CHATBOT')
             estimator = ui.tab('ESTIMATOR')
             #realtime = ui.tab('REALTIME')
             resources = ui.tab('RESOURCES')
     
     # set tabs in a tab panel
     with ui.tab_panels(tabs,
-                       value = chatbot,
+                       value = estimator,
                        on_change = on_tab_change).classes('w-full'):
         
+        """
         # what appears in chatbot tab
         with ui.tab_panel(chatbot):
             user_id = str('6af9dba1-022a-41ba-8f5b-34c21d1cc89a')
@@ -319,7 +321,7 @@ async def main(client: Client):
 
             with ui.column().classes('w-full max-w-2xl mx-auto items-stretch'):
                 await chat_messages(user_id)
-            
+        """
         # what appears in estimator tab
         with ui.tab_panel(estimator):
             # initiate variables 
@@ -439,7 +441,7 @@ async def main(client: Client):
                         # end of function
 
                     trigger_generation() 
-                    await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
+                    #await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
                                      
                 with ui.step('Consumption'):
                     # 2. enter dwelling type
@@ -508,7 +510,7 @@ async def main(client: Client):
                             ui.button('Back', on_click = stepper.previous).props('flat')
                             
                     trigger_roofarea() # end of function
-                    await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
+                    #await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
 
                 with ui.step('Supply'):
                     with ui.column().classes('w-100 items-left'):
@@ -570,7 +572,7 @@ async def main(client: Client):
         
         # what appears in resources tab
         with ui.tab_panel(resources):
-            await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
+            #await ui.run_javascript("window.scrollTo(0,document.body.scrollHeight)", respond = False) # autoscroll
 
             with ui.expansion('PV Cell Types').classes('w-full').style('font-weight:1000'):
                     # with ui.column().classes('w-full'):
