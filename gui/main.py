@@ -17,15 +17,15 @@ import mermaid
 import sys
 
 """ LOAD API KEYS FROM ENV """
-_ = load_dotenv(find_dotenv(filename='tab2_apikeys.txt')) # XUEAN PATH
-#_ = load_dotenv(find_dotenv())
+#_ = load_dotenv(find_dotenv(filename='tab2_apikeys.txt')) # XUEAN PATH
+_ = load_dotenv(find_dotenv())
 PVWATTS_API_KEY = os.environ['PVWATTS_API_KEY']
 OPENUV_API_KEY = os.environ['OPENUV_API_KEY']
 TOMTOM_API_KEY = os.environ['TOMTOM_API_KEY']
 
 """ IMPORT FUNCTIONS FOR ESTIMATOR TAB """
-sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/') # XUEAN PATH
-#sys.path.insert(0, r'../api/')
+#sys.path.insert(0, r'C:/Users/Zhong Xuean/Documents/dsaid-hackathon23-illuminati/api/') # XUEAN PATH
+sys.path.insert(0, r'../api/')
 from conversions import to_bearing
 from demand import get_demand_estimate, get_hours_elapsed
 from geocode import geocode
@@ -296,7 +296,7 @@ async def main(client: Client):
     # define the tabs
     with ui.header().classes(replace = 'row items-center') as header:
         with ui.tabs().classes('w-full') as tabs:
-            chatbot = ui.tab('CHATBOT')
+            chatbot = ui.tab('SEARCH')
             estimator = ui.tab('ESTIMATOR')
             #realtime = ui.tab('REALTIME')
             resources = ui.tab('RESOURCES')
